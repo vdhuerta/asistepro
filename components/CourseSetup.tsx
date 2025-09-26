@@ -64,7 +64,14 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
         style={{ backgroundImage: `url('https://raw.githubusercontent.com/vdhuerta/assets-aplications/main/Intro_DiarioDeCampo.png')` }}
       />
       <div className="fixed inset-0 bg-slate-100/90 backdrop-blur-sm flex items-center justify-center p-4 z-10">
-        <NeumorphicCard className="w-full max-w-md relative bg-sky-100">
+        <NeumorphicCard className="w-full max-w-md relative bg-sky-100 p-6 pt-10">
+          <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-20 h-20 bg-sky-100 rounded-full p-2 shadow-[5px_5px_10px_#c7ced4,-5px_-5px_10px_#ffffff] flex items-center justify-center">
+            <img
+              src="https://raw.githubusercontent.com/vdhuerta/assets-aplications/main/Logo%20UAD%20Redondo.png"
+              alt="Logo UAD"
+              className="w-full h-full rounded-full"
+            />
+          </div>
           <div className="absolute top-4 right-4">
             <button
               onClick={() => setIsAdminModalOpen(true)}
@@ -77,7 +84,9 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
               </svg>
             </button>
           </div>
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">AsistePRO</h2>
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">AsistePRO</h2>
+          </div>
           {isLoading ? (
             <p className="text-center text-gray-600">Cargando cursos...</p>
           ) : (
