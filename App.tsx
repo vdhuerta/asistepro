@@ -5,11 +5,13 @@ import Header from './components/Header';
 import RegistrationForm from './components/RegistrationForm';
 import ParticipantList from './components/ParticipantList';
 import { supabase } from './lib/supabaseClient';
+import { NeumorphicButton, NeumorphicCard } from './components/UI';
 
 function App() {
   const [courseDetails, setCourseDetails] = useState<CourseDetails | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
 
   useEffect(() => {
     if (courseDetails) {
@@ -57,7 +59,17 @@ function App() {
 
   const handleAddParticipant = (participant: Participant) => {
     setParticipants(prev => [...prev, participant]);
+    setShowSuccessModal(true);
   };
+
+  const handleGoBack = () => {
+    setCourseDetails(null);
+  };
+
+  const handleSuccessAndExit = () => {
+    setShowSuccessModal(false);
+    handleGoBack();
+  }
 
   if (!courseDetails) {
     return <CourseSetup onSetupComplete={handleSetupComplete} />;
@@ -72,18 +84,37 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 text-gray-800 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-5xl mx-auto">
-        <Header details={courseDetails} />
-        <main className="space-y-10">
-          <RegistrationForm 
-            onAddParticipant={handleAddParticipant}
-            courseDetails={courseDetails}
-          />
-          <ParticipantList participants={participants} />
-        </main>
+    <>
+      <div className="min-h-screen bg-slate-100 text-gray-800 p-4 sm:p-6 lg:p-8 flex flex-col">
+        <div className="max-w-5xl mx-auto w-full flex-grow">
+          <Header details={courseDetails} />
+          <main className="space-y-10">
+            <RegistrationForm 
+              onAddParticipant={handleAddParticipant}
+              courseDetails={courseDetails}
+              onGoBack={handleGoBack}
+            />
+            <ParticipantList participants={participants} />
+          </main>
+        </div>
+        <footer className="w-full text-center text-gray-600 text-[8px] py-4 mt-8">
+          <p>Desarrollado por Víctor Huerta © 2025 | UAD</p>
+        </footer>
       </div>
-    </div>
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-slate-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+          <div onClick={(e) => e.stopPropagation()}>
+            <NeumorphicCard className="w-full max-w-sm text-center">
+              <h2 className="text-xl font-bold text-green-600 mb-4">¡Éxito!</h2>
+              <p className="text-gray-700 mb-6">La asistencia se ha registrado con éxito.</p>
+              <NeumorphicButton onClick={handleSuccessAndExit}>
+                Salir
+              </NeumorphicButton>
+            </NeumorphicCard>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

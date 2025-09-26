@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabaseClient';
 interface RegistrationFormProps {
   onAddParticipant: (participant: Participant) => void;
   courseDetails: CourseDetails;
+  onGoBack: () => void;
 }
 
 const initialFormState = {
@@ -186,7 +187,7 @@ const campusOptions = [
     "No Aplica"
 ];
 
-const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, courseDetails }) => {
+const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, courseDetails, onGoBack }) => {
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
@@ -194,8 +195,14 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
   const signaturePadRef = useRef<SignaturePadHandle>(null);
 
   useEffect(() => {
-    const { firstName, paternalLastName, maternalLastName, rut, email, phone, role, faculty } = formData;
-    const requiredFields = [firstName, paternalLastName, maternalLastName, rut, email, phone, role, faculty];
+    const { 
+        firstName, paternalLastName, maternalLastName, rut, email, phone, role, faculty, 
+        department, major, contractType, teachingSemester, campus 
+    } = formData;
+    const requiredFields = [
+        firstName, paternalLastName, maternalLastName, rut, email, phone, role, faculty, 
+        department, major, contractType, teachingSemester, campus
+    ];
     const allFieldsFilled = requiredFields.every(field => field.trim() !== '');
     setIsFormValid(allFieldsFilled && hasSigned);
   }, [formData, hasSigned]);
@@ -207,8 +214,13 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid || isSubmitting) return;
+    if (isSubmitting) return;
     
+    if (!isFormValid) {
+      alert('Por favor, complete todos los campos obligatorios para registrarse.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     const signature = signaturePadRef.current?.getSignatureAsDataURL() || '';
@@ -264,9 +276,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
         created_at: data.created_at,
       };
       onAddParticipant(participantForState);
-      
-      setFormData(initialFormState);
-      signaturePadRef.current?.clear();
     }
 
     setIsSubmitting(false);
@@ -291,34 +300,37 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
             <option value="" disabled>Seleccione una facultad</option>
             {faculties.map(faculty => <option key={faculty} value={faculty}>{faculty}</option>)}
           </NeumorphicSelect>
-          <NeumorphicSelect label="Departamento" id="department" name="department" value={formData.department} onChange={handleInputChange}>
+          <NeumorphicSelect label="Departamento" id="department" name="department" value={formData.department} onChange={handleInputChange} required>
              <option value="" disabled>Seleccione un departamento</option>
              {departments.map(dept => <option key={dept} value={dept}>{dept}</option>)}
           </NeumorphicSelect>
-          <NeumorphicSelect label="Carrera" id="major" name="major" value={formData.major} onChange={handleInputChange}>
+          <NeumorphicSelect label="Carrera" id="major" name="major" value={formData.major} onChange={handleInputChange} required>
             <option value="" disabled>Seleccione una carrera</option>
             {majors.map(major => <option key={major} value={major}>{major}</option>)}
           </NeumorphicSelect>
-          <NeumorphicSelect label="Tipo Contrato" id="contractType" name="contractType" value={formData.contractType} onChange={handleInputChange}>
+          <NeumorphicSelect label="Tipo Contrato" id="contractType" name="contractType" value={formData.contractType} onChange={handleInputChange} required>
             <option value="" disabled>Seleccione un tipo</option>
             {contractTypes.map(type => <option key={type} value={type}>{type}</option>)}
           </NeumorphicSelect>
-          <NeumorphicSelect label="Semestre Docencia" id="teachingSemester" name="teachingSemester" value={formData.teachingSemester} onChange={handleInputChange}>
+          <NeumorphicSelect label="Semestre Docencia" id="teachingSemester" name="teachingSemester" value={formData.teachingSemester} onChange={handleInputChange} required>
             <option value="" disabled>Seleccione un semestre</option>
             {teachingSemesters.map(semester => <option key={semester} value={semester}>{semester}</option>)}
           </NeumorphicSelect>
-          <NeumorphicSelect label="Sede" id="campus" name="campus" value={formData.campus} onChange={handleInputChange}>
+          <NeumorphicSelect label="Sede" id="campus" name="campus" value={formData.campus} onChange={handleInputChange} required>
             <option value="" disabled>Seleccione una sede</option>
             {campusOptions.map(campus => <option key={campus} value={campus}>{campus}</option>)}
           </NeumorphicSelect>
           
           <div className="md:col-span-2 lg:col-span-3">
-            <SignaturePad ref={signaturePadRef} label="Firma (obligatorio)" onSignatureStateChange={setHasSigned} />
+            <SignaturePad ref={signaturePadRef} label="Firma" onSignatureStateChange={setHasSigned} required />
           </div>
         </div>
-        <div className="mt-8 flex justify-center">
-          <NeumorphicButton type="submit" disabled={!isFormValid || isSubmitting}>
+        <div className="mt-8 flex flex-col sm:flex-row-reverse justify-center items-center gap-4">
+          <NeumorphicButton type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
             {isSubmitting ? 'Registrando...' : 'Registrar Asistencia'}
+          </NeumorphicButton>
+          <NeumorphicButton type="button" onClick={onGoBack} className="w-full sm:w-auto">
+            Volver
           </NeumorphicButton>
         </div>
       </form>

@@ -65,7 +65,7 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
       />
       <div className="fixed inset-0 bg-slate-100/90 backdrop-blur-sm flex items-center justify-center p-4 z-10">
         <NeumorphicCard className="w-full max-w-md relative bg-sky-100 p-6 pt-10">
-          <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-20 h-20 bg-sky-100 rounded-full p-2 shadow-[5px_5px_10px_#c7ced4,-5px_-5px_10px_#ffffff] flex items-center justify-center">
+          <div className="absolute -top-[64px] left-1/2 -translate-x-1/2 w-20 h-20 bg-sky-100 rounded-full p-2 shadow-[5px_5px_10px_#c7ced4,-5px_-5px_10px_#ffffff] flex items-center justify-center">
             <img
               src="https://raw.githubusercontent.com/vdhuerta/assets-aplications/main/Logo%20UAD%20Redondo.png"
               alt="Logo UAD"

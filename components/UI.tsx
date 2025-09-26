@@ -23,12 +23,16 @@ export const NeumorphicCard: React.FC<NeumorphicCardProps> = ({ children, classN
 
 interface NeumorphicInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
+  required?: boolean;
 }
 
 export const NeumorphicInput: React.FC<NeumorphicInputProps> = ({ label, id, ...props }) => {
   return (
     <div className="w-full">
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+        {props.required && <span className="text-red-500 text-[8px] ml-1 font-normal">(obligatorio)</span>}
+      </label>
       <input
         id={id}
         className={`${baseBg} ${insetShadow} w-full rounded-lg py-3 px-4 text-gray-700 focus:outline-none transition-shadow duration-200`}
@@ -41,12 +45,16 @@ export const NeumorphicInput: React.FC<NeumorphicInputProps> = ({ label, id, ...
 interface NeumorphicSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label: string;
   children: React.ReactNode;
+  required?: boolean;
 }
 
 export const NeumorphicSelect: React.FC<NeumorphicSelectProps> = ({ label, id, children, ...props }) => {
   return (
     <div className="w-full">
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+       <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+        {props.required && <span className="text-red-500 text-[8px] ml-1 font-normal">(obligatorio)</span>}
+      </label>
       <div className="relative">
         <select
           id={id}

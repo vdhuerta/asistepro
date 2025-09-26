@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useImperativeHandle, useState } from 'react';
-import { NeumorphicButton } from './UI';
 
 export type SignaturePadHandle = {
   getSignatureAsDataURL: () => string;
@@ -10,9 +9,10 @@ export type SignaturePadHandle = {
 interface SignaturePadProps {
   label: string;
   onSignatureStateChange?: (isSigned: boolean) => void;
+  required?: boolean;
 }
 
-const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadProps>(({ label, onSignatureStateChange }, ref) => {
+const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadProps>(({ label, onSignatureStateChange, required }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSigned, setHasSigned] = useState(false);
@@ -112,7 +112,10 @@ const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadProps>(({ 
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+        {required && <span className="text-red-500 text-[8px] ml-1 font-normal">(obligatorio)</span>}
+      </label>
       <div className="relative w-full h-[200px] bg-slate-100 shadow-[inset_5px_5px_10px_#c7ced4,inset_-5px_-5px_10px_#ffffff] rounded-lg cursor-crosshair touch-none ring-1 ring-slate-400">
         <canvas
           ref={canvasRef}
@@ -125,11 +128,23 @@ const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadProps>(({ 
           onTouchEnd={stopDrawing}
           className="w-full h-full rounded-lg"
         />
-      </div>
-       <div className="mt-4 flex justify-center sm:justify-end">
-        <NeumorphicButton type="button" onClick={clearCanvas}>
-          Limpiar Firma
-        </NeumorphicButton>
+        {hasSigned && (
+          <button
+            type="button"
+            onClick={clearCanvas}
+            className="absolute top-2 right-2 w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600 shadow-[2px_2px_4px_#c7ced4,-2px_-2px_4px_#ffffff] active:shadow-[inset_1px_1px_2px_#c7ced4,inset_-1px_-1px_2px_#ffffff] hover:bg-red-200 transition-all duration-200"
+            aria-label="Limpiar firma"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 8h14"/>
+                <path d="M7 8v12"/>
+                <path d="M10 8v12"/>
+                <path d="M13 8v12"/>
+                <path d="M16 8v12"/>
+                <path d="M4 8l3-5h10l3 5"/>
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );
