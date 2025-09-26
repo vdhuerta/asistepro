@@ -1,0 +1,5 @@
+{
+  "name": "AsistePRO",
+  "description": "AsistePRO: Una aplicación web para registrar la asistencia de participantes a un curso o capacitación, con un diseño neumórfico. Permite capturar datos del participante, incluyendo una firma digital.",
+  "requestFramePermissions": []
+}
