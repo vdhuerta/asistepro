@@ -564,6 +564,8 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                                 </div>
                                 <div className="flex items-center justify-end gap-2 flex-wrap">
                                   <SegmentedControl
+                                    className="border border-slate-300"
+                                    buttonClassName="text-[11px]"
                                     options={[
                                       { label: 'Visible', value: true, activeClassName: 'bg-green-200 text-green-800' },
                                       { label: 'Oculto', value: false, activeClassName: 'bg-red-200 text-red-800' },
@@ -575,21 +577,21 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                                   <NeumorphicButton
                                     onClick={() => handleDownloadCsv(course.id, course.name, course.date)}
                                     disabled={downloading.id !== null || deletingCourseId !== null}
-                                    className="!py-1 !px-3 text-xs whitespace-nowrap flex items-center gap-1.5"
+                                    className="!py-1 !px-3 text-[11px] whitespace-nowrap flex items-center gap-1.5 border border-slate-300"
                                   >
                                     {downloading.id === course.id && downloading.type === 'csv' ? '...' : <><DownloadIcon /> CSV</>}
                                   </NeumorphicButton>
                                   <NeumorphicButton
                                     onClick={() => handleDownloadHtml(course)}
                                     disabled={downloading.id !== null || deletingCourseId !== null}
-                                    className="!py-1 !px-3 text-xs whitespace-nowrap flex items-center gap-1.5"
+                                    className="!py-1 !px-3 text-[11px] whitespace-nowrap flex items-center gap-1.5 border border-slate-300"
                                   >
                                     {downloading.id === course.id && downloading.type === 'html' ? '...' : <><DownloadIcon /> HTML</>}
                                   </NeumorphicButton>
                                    <NeumorphicButton
                                     onClick={() => handleDeleteCourse(course.id, course.name)}
                                     disabled={isSaving || downloading.id !== null || deletingCourseId !== null}
-                                    className="!py-1 !px-3 text-xs !bg-red-100 !text-red-700 hover:!text-red-900 active:!shadow-[inset_1px_1px_2px_#d9b8b8,inset_-1px_-1px_2px_#ffffff]"
+                                    className="!py-1 !px-3 text-[11px] !bg-red-100 !text-red-700 hover:!text-red-900 active:!shadow-[inset_1px_1px_2px_#d9b8b8,inset_-1px_-1px_2px_#ffffff] border border-red-300"
                                     aria-label={`Eliminar curso ${course.name}`}
                                   >
                                     {deletingCourseId === course.id ? '...' : <TrashIcon />}

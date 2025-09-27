@@ -147,11 +147,13 @@ interface SegmentedControlProps<T> {
   value: T;
   onChange: (value: T) => void;
   disabled?: boolean;
+  buttonClassName?: string;
+  className?: string;
 }
 
-export const SegmentedControl = <T extends string | number | boolean>({ options, value, onChange, disabled = false }: SegmentedControlProps<T>) => {
+export const SegmentedControl = <T extends string | number | boolean>({ options, value, onChange, disabled = false, buttonClassName, className }: SegmentedControlProps<T>) => {
   return (
-    <div className={twMerge(`inline-flex items-center p-1 rounded-lg ${insetShadow}`, disabled ? 'opacity-60 cursor-not-allowed' : '')}>
+    <div className={twMerge(`inline-flex items-center p-1 rounded-lg ${insetShadow}`, disabled ? 'opacity-60 cursor-not-allowed' : '', className)}>
       {options.map((option) => {
         const isActive = option.value === value;
         return (
@@ -165,7 +167,8 @@ export const SegmentedControl = <T extends string | number | boolean>({ options,
               isActive
                 ? twMerge(activeInsetShadow, option.activeClassName || 'bg-slate-200 text-blue-600')
                 : `${baseBg} text-gray-600 hover:bg-slate-200/50`,
-              disabled ? 'cursor-not-allowed' : ''
+              disabled ? 'cursor-not-allowed' : '',
+              buttonClassName
             )}
             aria-pressed={isActive}
           >

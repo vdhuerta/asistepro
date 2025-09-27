@@ -5,6 +5,7 @@ import Header from './components/Header';
 import RegistrationForm from './components/RegistrationForm';
 import ParticipantList from './components/ParticipantList';
 import VerificationPage from './components/VerificationPage';
+import ConstanciaVerificationPage from './components/ConstanciaVerificationPage';
 import { supabase } from './lib/supabaseClient';
 import { NeumorphicButton, NeumorphicCard } from './components/UI';
 
@@ -13,8 +14,12 @@ function App() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
-  const [verificationId, setVerificationId] = useState<string | null>(() => 
+  
+  const [reportVerificationId] = useState<string | null>(() => 
     new URLSearchParams(window.location.search).get('verificacion')
+  );
+  const [constanciaVerificationId] = useState<string | null>(() => 
+    new URLSearchParams(window.location.search).get('constancia')
   );
 
   useEffect(() => {
@@ -75,8 +80,12 @@ function App() {
     handleGoBack();
   }
 
-  if (verificationId) {
-    return <VerificationPage verificationId={verificationId} />;
+  if (reportVerificationId) {
+    return <VerificationPage verificationId={reportVerificationId} />;
+  }
+
+  if (constanciaVerificationId) {
+    return <ConstanciaVerificationPage verificationId={constanciaVerificationId} />;
   }
 
   if (!courseDetails) {
@@ -102,7 +111,7 @@ function App() {
               courseDetails={courseDetails}
               onGoBack={handleGoBack}
             />
-            <ParticipantList participants={participants} />
+            <ParticipantList participants={participants} courseDetails={courseDetails} />
           </main>
         </div>
         <footer className="w-full text-center text-gray-600 text-[8px] py-4 mt-8">

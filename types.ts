@@ -29,3 +29,13 @@ export interface Participant {
   signature: string; // Base64 data URL
   created_at?: string;
 }
+
+export interface ConstanciaVerificationRecord {
+  id: string;
+  curso_id: string;
+  asistencia_id: string;
+  nombre_participante: string;
+  rut_participante: string;
+  nombre_curso: string;
+  fecha_generacion: string;
+}
