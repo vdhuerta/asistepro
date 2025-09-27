@@ -292,7 +292,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
             tr:nth-child(even) { background-color: #f8fafc; }
             td img { max-height: 25px; vertical-align: middle; background: #fff; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
             footer { text-align: center; padding: 1.5rem; font-size: 0.75rem; color: #64748b; background-color: #f1f5f9; }
-            .verification-section { display: flex; align-items: center; justify-content: center; gap: 2rem; margin-top: 1rem; }
+            .verification-section { display: flex; align-items: center; justify-content: center; gap: 2rem; }
             .verification-text { text-align: left; }
             .verification-text p { margin: 0.2rem 0; font-size: 0.7rem; }
             .verification-text code { background-color: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
@@ -337,7 +337,6 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                 </table>
             </main>
             <footer>
-                <p>Reporte generado por AsistePRO © 2025</p>
                 <div class="verification-section">
                     <img src="${qrCodeUrl}" alt="Código QR de Verificación">
                     <div class="verification-text">
@@ -346,6 +345,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                         <p>ID de Verificación: <code>${verificationId}</code></p>
                     </div>
                 </div>
+                <p style="margin-top: 1.5rem;">Reporte generado por AsistePRO © 2025 | UAD</p>
             </footer>
         </div>
     </body>
@@ -490,8 +490,8 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                     <NeumorphicInput label="Ofertante" name="provider" value={courseData.provider} onChange={handleInputChange} required />
                     <NeumorphicInput label="Lugar" name="location" value={courseData.location} onChange={handleInputChange} required />
                     <NeumorphicInput label="Encargado" name="person_in_charge" value={courseData.person_in_charge} onChange={handleInputChange} />
-                    <NeumorphicInput label="Fecha" name="date" type="date" value={courseData.date} onChange={handleInputChange} required className={`block min-w-0 ${!courseData.date ? 'text-gray-500' : ''}`} />
-                    <NeumorphicInput label="Hora" name="time" type="time" value={courseData.time} onChange={handleInputChange} className={`block min-w-0 ${!courseData.time ? 'text-gray-500' : ''}`} />
+                    <NeumorphicInput label="Fecha" name="date" type="date" value={courseData.date} onChange={handleInputChange} required className="block min-w-0" />
+                    <NeumorphicInput label="Hora" name="time" type="time" value={courseData.time} onChange={handleInputChange} className="block min-w-0" />
                 </div>
                 <div className="pt-4 flex justify-center gap-4">
                     <NeumorphicButton type="submit" disabled={isSubmitting} className="!py-2 !px-6">

@@ -27,17 +27,33 @@ interface NeumorphicInputProps extends React.InputHTMLAttributes<HTMLInputElemen
 }
 
 export const NeumorphicInput: React.FC<NeumorphicInputProps> = ({ label, id, className, ...props }) => {
+  const isDateTime = props.type === 'date' || props.type === 'time';
+  const hasValue = !!props.value;
+
   return (
     <div className="w-full">
       <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
         {label}
         {props.required && <span className="text-red-500 text-[8px] ml-1 font-normal">(obligatorio)</span>}
       </label>
-      <input
-        id={id}
-        className={twMerge(`${baseBg} ${insetShadow} w-full rounded-lg py-3 px-4 text-gray-700 focus:outline-none transition-shadow duration-200`, className)}
-        {...props}
-      />
+      <div className="relative">
+        <input
+          id={id}
+          className={twMerge(
+            `${baseBg} ${insetShadow} w-full rounded-lg py-3 px-4 text-gray-700 focus:outline-none transition-shadow duration-200`,
+            // Hide browser's native placeholder text (e.g., mm/dd/yyyy) on empty date/time inputs
+            // so our custom placeholder can be shown instead.
+            isDateTime && !hasValue ? 'text-transparent' : '',
+            className
+          )}
+          {...props}
+        />
+        {isDateTime && !hasValue && (
+          <span className="absolute inset-y-0 left-4 flex items-center text-gray-400 pointer-events-none">
+            {props.type === 'date' ? 'Seleccionar fecha' : 'Seleccionar hora'}
+          </span>
+        )}
+      </div>
     </div>
   );
 };

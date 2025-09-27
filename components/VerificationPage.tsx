@@ -93,7 +93,14 @@ const VerificationPage: React.FC<VerificationPageProps> = ({ verificationId }) =
 
     if (record) {
       return (
-        <NeumorphicCard className="w-full max-w-lg bg-green-50 p-8">
+        <NeumorphicCard className="w-full max-w-lg bg-green-50 p-8 pt-16 relative">
+          <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-green-50 rounded-full p-2 shadow-[5px_5px_10px_#c7d4c8,-5px_-5px_10px_#ffffff] flex items-center justify-center">
+            <img
+              src="https://raw.githubusercontent.com/vdhuerta/assets-aplications/main/Logo%20UAD%20Redondo.png"
+              alt="Logo UAD"
+              className="w-full h-full rounded-full"
+            />
+          </div>
           <div className="w-16 h-16 bg-green-200 rounded-full mx-auto flex items-center justify-center mb-4 shadow-[inset_3px_3px_6px_#c7d4c8,inset_-3px_-3px_6px_#ffffff]">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

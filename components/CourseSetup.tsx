@@ -1,8 +1,10 @@
 
+
 import React, { useState, useEffect } from 'react';
 import type { CourseDetails } from '../types';
 import { NeumorphicCard, NeumorphicButton, NeumorphicSelect } from './UI';
 import AdminModal from './AdminModal';
+import InstallHelpModal from './InstallHelpModal';
 import { supabase } from '../lib/supabaseClient';
 
 interface CourseSetupProps {
@@ -14,6 +16,7 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [isInstallHelpModalOpen, setIsInstallHelpModalOpen] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchCourses = async () => {
@@ -76,12 +79,23 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
       />
       <div className="fixed inset-0 bg-slate-100/90 backdrop-blur-sm flex items-center justify-center p-4 z-10">
         <NeumorphicCard className="w-full max-w-md relative bg-sky-100 p-6 pt-10">
-          <div className="absolute -top-[64px] left-1/2 -translate-x-1/2 w-20 h-20 bg-sky-100 rounded-full p-2 shadow-[5px_5px_10px_#c7ced4,-5px_-5px_10px_#ffffff] flex items-center justify-center">
+          <div className="absolute -top-[59px] left-1/2 -translate-x-1/2 w-20 h-20 bg-sky-100 rounded-full p-2 shadow-[5px_5px_10px_#c7ced4,-5px_-5px_10px_#ffffff] flex items-center justify-center">
             <img
               src="https://raw.githubusercontent.com/vdhuerta/assets-aplications/main/Logo%20UAD%20Redondo.png"
               alt="Logo UAD"
               className="w-full h-full rounded-full"
             />
+          </div>
+          <div className="absolute top-4 left-4">
+             <button
+              onClick={() => setIsInstallHelpModalOpen(true)}
+              className="p-2 rounded-full text-gray-600 hover:bg-slate-200 active:shadow-[inset_2px_2px_5px_#c7ced4,inset_-2px_-2px_5px_#ffffff] transition-all duration-200"
+              aria-label="Instalar aplicación"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+              </svg>
+            </button>
           </div>
           <div className="absolute top-4 right-4">
             <button
@@ -90,7 +104,7 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
               aria-label="Panel de Administrador"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.995s.145.755.438.995l1.003.827c.424.35.534.954.26 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.332.183-.582.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.003-.827c.293-.24.438.613-.438-.995s-.145-.755-.438-.995l-1.003-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.995s.145.755.438.995l1.003.827c.424.35.534.954.26 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.332.183-.582.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.003-.827c.293-.24.438.613-.438-.995s-.145-.755-.438-.995l-1.003-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582.495.645-.87l.213-1.281Z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0Z" />
               </svg>
             </button>
@@ -139,6 +153,7 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
         </NeumorphicCard>
       </div>
       {isAdminModalOpen && <AdminModal onClose={() => setIsAdminModalOpen(false)} onCourseCreated={handleCourseCreated} />}
+      {isInstallHelpModalOpen && <InstallHelpModal onClose={() => setIsInstallHelpModalOpen(false)} />}
     </>
   );
 };

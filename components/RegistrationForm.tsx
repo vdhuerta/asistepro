@@ -191,8 +191,17 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
+  const [isRutValid, setIsRutValid] = useState(true);
   const [hasSigned, setHasSigned] = useState(false);
+  
+  const [suggestions, setSuggestions] = useState<Participant[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   const signaturePadRef = useRef<SignaturePadHandle>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const rutRegex = /^\d{7,8}-[0-9kK]$/i;
 
   useEffect(() => {
     const { 
@@ -204,12 +213,113 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
         department, major, contractType, teachingSemester, campus
     ];
     const allFieldsFilled = requiredFields.every(field => field.trim() !== '');
-    setIsFormValid(allFieldsFilled && hasSigned);
-  }, [formData, hasSigned]);
+    const isRutFormatValid = rutRegex.test(rut);
+    setIsFormValid(allFieldsFilled && hasSigned && isRutFormatValid);
+  }, [formData, hasSigned, rutRegex]);
+
+  useEffect(() => {
+    const search = async () => {
+      if (formData.rut.trim().length < 4) {
+        setSuggestions([]);
+        return;
+      }
+      setIsSearching(true);
+      setShowSuggestions(true);
+
+      const { data, error } = await supabase
+        .from('asistencias')
+        .select('*')
+        .ilike('rut', `${formData.rut}%`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) {
+        console.error('Error searching participants:', error);
+        setSuggestions([]);
+      } else if (data) {
+        const uniqueParticipantsMap = new Map<string, Participant>();
+        data.forEach((p: any) => {
+          if (!uniqueParticipantsMap.has(p.rut)) {
+            uniqueParticipantsMap.set(p.rut, {
+              id: p.id,
+              firstName: p.nombres,
+              paternalLastName: p.apellido_paterno,
+              maternalLastName: p.apellido_materno,
+              rut: p.rut,
+              email: p.email,
+              phone: p.telefono,
+              role: p.rol,
+              faculty: p.facultad,
+              department: p.departamento,
+              major: p.carrera,
+              contractType: p.tipo_contrato,
+              teachingSemester: p.semestre_docencia,
+              campus: p.sede,
+              signature: '', // Don't autofill signature
+              created_at: p.created_at,
+            });
+          }
+        });
+        setSuggestions(Array.from(uniqueParticipantsMap.values()));
+      }
+      setIsSearching(false);
+    };
+
+    const handler = setTimeout(() => {
+      if(showSuggestions) {
+          search();
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [formData.rut, showSuggestions]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+     if (name === 'rut') {
+      const formattedValue = value.replace(/\./g, '').toUpperCase();
+      setIsRutValid(rutRegex.test(formattedValue) || formattedValue === '');
+      setFormData(prev => ({ ...prev, [name]: formattedValue }));
+      setShowSuggestions(true);
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSelectParticipant = (participant: Participant) => {
+    setFormData({
+      firstName: participant.firstName,
+      paternalLastName: participant.paternalLastName,
+      maternalLastName: participant.maternalLastName,
+      rut: participant.rut,
+      email: participant.email,
+      phone: participant.phone,
+      role: participant.role,
+      faculty: participant.faculty,
+      department: participant.department,
+      major: participant.major,
+      contractType: participant.contractType,
+      teachingSemester: participant.teachingSemester,
+      campus: participant.campus,
+    });
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setIsRutValid(true); // The selected RUT is valid
+    signaturePadRef.current?.clear();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -217,7 +327,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
     if (isSubmitting) return;
     
     if (!isFormValid) {
-      alert('Por favor, complete todos los campos obligatorios para registrarse.');
+      alert('Por favor, complete todos los campos obligatorios y verifique el formato del RUT para registrarse.');
       return;
     }
 
@@ -286,10 +396,48 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
       <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">Registro de Participante</h2>
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="relative" ref={suggestionsRef}>
+            <NeumorphicInput 
+              label="RUT (ej: 12345678-9)" 
+              id="rut" 
+              name="rut" 
+              value={formData.rut} 
+              onChange={handleInputChange} 
+              required 
+              maxLength={10}
+              className={!isRutValid && formData.rut.length > 0 ? 'ring-2 ring-red-400 shadow-[inset_2px_2px_5px_#fbdada,inset_-2px_-2px_5px_#ffffff]' : ''}
+              autoComplete="off"
+            />
+            {!isRutValid && formData.rut.length > 0 && (
+              <p className="text-xs text-red-600 mt-1">Formato de RUT inválido. Use: 12345678-K, sin puntos.</p>
+            )}
+            {showSuggestions && formData.rut.length >= 4 && (
+              <div className="absolute top-full left-0 right-0 mt-2 z-20">
+                <NeumorphicCard className="max-h-60 overflow-y-auto p-2">
+                  {isSearching ? (
+                    <div className="p-2 text-center text-gray-500">Buscando...</div>
+                  ) : suggestions.length > 0 ? (
+                    <ul>
+                      {suggestions.map(p => (
+                        <li key={`${p.id}-${p.created_at}`} 
+                          className="p-3 text-sm text-gray-700 rounded-lg cursor-pointer hover:bg-slate-200/50"
+                          onMouseDown={() => handleSelectParticipant(p)}
+                        >
+                          <p className="font-semibold">{`${p.firstName} ${p.paternalLastName}`}</p>
+                          <p className="text-xs text-gray-500">{p.rut}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="p-2 text-center text-gray-500">No se encontraron coincidencias.</div>
+                  )}
+                </NeumorphicCard>
+              </div>
+            )}
+          </div>
           <NeumorphicInput label="Nombres" id="firstName" name="firstName" value={formData.firstName} onChange={handleInputChange} required />
           <NeumorphicInput label="Apellido Paterno" id="paternalLastName" name="paternalLastName" value={formData.paternalLastName} onChange={handleInputChange} required />
           <NeumorphicInput label="Apellido Materno" id="maternalLastName" name="maternalLastName" value={formData.maternalLastName} onChange={handleInputChange} required />
-          <NeumorphicInput label="RUT (ej: 12345678-9)" id="rut" name="rut" value={formData.rut} onChange={handleInputChange} required />
           <NeumorphicInput label="Correo Electrónico" id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} required />
           <NeumorphicInput label="Teléfono" id="phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} required />
           <NeumorphicSelect label="Rol" id="role" name="role" value={formData.role} onChange={handleInputChange} required>
@@ -326,7 +474,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
           </div>
         </div>
         <div className="mt-8 flex flex-col sm:flex-row-reverse justify-center items-center gap-4">
-          <NeumorphicButton type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+          <NeumorphicButton type="submit" disabled={isSubmitting || !isFormValid} className="w-full sm:w-auto">
             {isSubmitting ? 'Registrando...' : 'Registrar Asistencia'}
           </NeumorphicButton>
           <NeumorphicButton type="button" onClick={onGoBack} className="w-full sm:w-auto">
