@@ -135,7 +135,12 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
       
     if (error) {
       console.error('Error creating course:', error);
-      alert(`Hubo un error al crear el curso: ${getErrorMessage(error)}`);
+      let userMessage = getErrorMessage(error);
+      if (error.message && (error.message.includes('security policy') || error.message.includes('permission denied'))) {
+        userMessage = 'La creación fue bloqueada por las políticas de seguridad de la base de datos (RLS). ' +
+                      'Asegúrese de que exista una política que permita la inserción (INSERT) en la tabla "cursos" para el rol "anon".';
+      }
+      alert(`Hubo un error al crear el curso: ${userMessage}`);
     } else {
       alert('Curso creado exitosamente.');
       onCourseCreated();
@@ -183,14 +188,14 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
       setPendingChanges({});
       onCourseCreated();
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving changes:', err);
-      const errorMessage = getErrorMessage(err);
-      alert(
-        `ERROR: No se pudieron guardar todos los cambios.\n\n` +
-        `Motivo probable: Permisos insuficientes en la base de datos (RLS).\n\n` +
-        `Detalle técnico: ${errorMessage}`
-      );
+      let userMessage = getErrorMessage(err);
+      if (err.message && (err.message.includes('security policy') || err.message.includes('permission denied'))) {
+        userMessage = 'Los cambios fueron bloqueados por las políticas de seguridad de la base de datos (RLS). ' +
+                       'Asegúrese de que exista una política que permita la actualización (UPDATE) en la tabla "cursos" para el rol "anon".';
+      }
+      alert(`ERROR: No se pudieron guardar los cambios.\n\n${userMessage}`);
     } finally {
       setIsSaving(false);
     }
@@ -477,7 +482,12 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
       onCourseCreated(); // This re-triggers a fetch in the parent, ensuring sync
     } catch (err: any) {
       console.error('Error deleting course:', err);
-      alert(`No se pudo eliminar el curso: ${getErrorMessage(err)}`);
+      let userMessage = getErrorMessage(err);
+      if (err.message && (err.message.includes('security policy') || err.message.includes('permission denied'))) {
+        userMessage = 'La eliminación fue bloqueada por las políticas de seguridad de la base de datos (RLS). ' +
+                      'Asegúrese de que exista una política que permita la eliminación (DELETE) en la tabla "cursos" para el rol "anon".';
+      }
+      alert(`No se pudo eliminar el curso: ${userMessage}`);
     } finally {
       setDeletingCourseId(null);
     }
