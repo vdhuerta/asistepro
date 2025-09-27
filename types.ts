@@ -8,6 +8,7 @@ export interface CourseDetails {
   date: string; // YYYY-MM-DD
   time?: string; // HH:MM
   person_in_charge?: string;
+  is_visible: boolean;
 }
 
 export interface Participant {

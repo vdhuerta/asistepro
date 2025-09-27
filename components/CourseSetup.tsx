@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { CourseDetails } from '../types';
 import { NeumorphicCard, NeumorphicButton, NeumorphicSelect } from './UI';
@@ -13,33 +14,43 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchCourses = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from('cursos')
-      .select('*')
-      .order('date', { ascending: false });
+    setFetchError(null);
+    try {
+      const { data, error } = await supabase
+        .from('cursos')
+        .select('*')
+        .eq('is_visible', true)
+        .order('date', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching courses:', error);
-      alert(`No se pudieron cargar los cursos: ${error.message}`);
-    } else {
-      setCourses(data as CourseDetails[]);
-      if (data.length > 0) {
+      if (error) throw error;
+
+      setCourses(data || []);
+      if (data && data.length > 0) {
         setSelectedCourseId(data[0].id);
+      } else {
+        setSelectedCourseId('');
       }
+    } catch (err: any) {
+      console.error('Error fetching courses:', err);
+      const errorMessage = `No se pudieron cargar los cursos. Causa: ${err.message || 'Error desconocido.'}. Verifique la conexión y la configuración de la base de datos.`;
+      setFetchError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
     fetchCourses();
+     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const handleCourseCreated = () => {
     fetchCourses();
-    setIsAdminModalOpen(false);
+    // No cerramos el modal para que el admin pueda seguir gestionando
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -89,6 +100,13 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
           </div>
           {isLoading ? (
             <p className="text-center text-gray-600">Cargando cursos...</p>
+          ) : fetchError ? (
+            <div className="text-center space-y-4">
+              <p className="text-red-600 bg-red-100 p-3 rounded-lg">{fetchError}</p>
+              <NeumorphicButton onClick={fetchCourses}>
+                  Reintentar
+              </NeumorphicButton>
+            </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <NeumorphicSelect
@@ -107,7 +125,7 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
                     </option>
                   ))
                 ) : (
-                  <option value="" disabled>No hay cursos creados</option>
+                  <option value="" disabled>No hay cursos visibles</option>
                 )}
               </NeumorphicSelect>
               

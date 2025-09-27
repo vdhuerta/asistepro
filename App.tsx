@@ -4,6 +4,7 @@ import CourseSetup from './components/CourseSetup';
 import Header from './components/Header';
 import RegistrationForm from './components/RegistrationForm';
 import ParticipantList from './components/ParticipantList';
+import VerificationPage from './components/VerificationPage';
 import { supabase } from './lib/supabaseClient';
 import { NeumorphicButton, NeumorphicCard } from './components/UI';
 
@@ -12,6 +13,9 @@ function App() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+  const [verificationId, setVerificationId] = useState<string | null>(() => 
+    new URLSearchParams(window.location.search).get('verificacion')
+  );
 
   useEffect(() => {
     if (courseDetails) {
@@ -69,6 +73,10 @@ function App() {
   const handleSuccessAndExit = () => {
     setShowSuccessModal(false);
     handleGoBack();
+  }
+
+  if (verificationId) {
+    return <VerificationPage verificationId={verificationId} />;
   }
 
   if (!courseDetails) {
