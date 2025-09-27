@@ -20,8 +20,9 @@ export const constanciaStyles = `
     -webkit-print-color-adjust: exact;
     color-adjust: exact;
     display: flex;
+    flex-direction: column;
     justify-content: center;
-    align-items: flex-start;
+    align-items: center;
     min-height: 100vh;
   }
   .page {
@@ -143,10 +144,11 @@ export const constanciaStyles = `
   }
 
   .print-button-container {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-bottom: 2rem;
     z-index: 1000;
   }
 
@@ -225,6 +227,14 @@ const ConstanciaTemplate: React.FC<ConstanciaTemplateProps> = ({ participant, co
   const pdfGenerationScript = `
     document.addEventListener('DOMContentLoaded', function() {
       const btn = document.getElementById('pdfBtn');
+      const backBtn = document.getElementById('backBtn');
+
+      if (backBtn) {
+        backBtn.addEventListener('click', function() {
+          window.close();
+        });
+      }
+
       if (!btn) return;
 
       const originalContent = btn.innerHTML;
@@ -315,6 +325,12 @@ const ConstanciaTemplate: React.FC<ConstanciaTemplateProps> = ({ participant, co
       </div>
 
       <div className="print-button-container">
+        <button id="backBtn" className="print-button">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+          </svg>
+          Volver
+        </button>
         <button id="pdfBtn" className="print-button">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6 3.125A2.25 2.25 0 0 1 8.25 1h7.5A2.25 2.25 0 0 1 18 3.125l.001 10.704M18 13.828c-.24.03-.48.062-.72.096m.72-.096A42.417 42.417 0 0 0 12 13.5m0 0a42.417 42.417 0 0 0-6.72 3.329m6.72-3.329a42.417 42.417 0 0 1 6.72 3.329M3 19.5a1.5 1.5 0 0 1 1.5-1.5h15a1.5 1.5 0 0 1 1.5 1.5v.625a1.5 1.5 0 0 1-1.5 1.5h-15a1.5 1.5 0 0 1-1.5-1.5v-.625Z" />

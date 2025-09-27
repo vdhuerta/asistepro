@@ -107,7 +107,7 @@ const VerificationPage: React.FC<VerificationPageProps> = ({ verificationId }) =
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-green-800 mb-4 text-center">✅ Reporte Válido</h2>
-          <div className="space-y-3 text-left text-gray-700">
+          <div className="space-y-3 text-center text-gray-700">
             <p><strong className="font-semibold text-gray-800">Curso:</strong> {record.nombre_curso}</p>
             <p><strong className="font-semibold text-gray-800">Lugar:</strong> {record.lugar_curso}</p>
             <p><strong className="font-semibold text-gray-800">Ofertante:</strong> {record.ofertante_curso}</p>

@@ -95,7 +95,7 @@ const ConstanciaVerificationPage: React.FC<ConstanciaVerificationPageProps> = ({
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-green-800 mb-4 text-center">✅ Constancia Válida</h2>
-          <div className="space-y-3 text-left text-gray-700">
+          <div className="space-y-3 text-center text-gray-700">
             <p><strong className="font-semibold text-gray-800">Participante:</strong> {record.nombre_participante}</p>
             <p><strong className="font-semibold text-gray-800">RUT:</strong> {record.rut_participante}</p>
             <p><strong className="font-semibold text-gray-800">Curso:</strong> {record.nombre_curso}</p>
