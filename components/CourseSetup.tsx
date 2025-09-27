@@ -19,9 +19,15 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
   const [isInstallHelpModalOpen, setIsInstallHelpModalOpen] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  // This function can now be called both initially and on real-time updates.
   const fetchCourses = async () => {
-    setIsLoading(true);
+    // We only want to show the main loading spinner on the first load.
+    // On subsequent fetches (from real-time updates), the UI shouldn't block.
+    if (courses.length === 0) {
+      setIsLoading(true);
+    }
     setFetchError(null);
+
     try {
       const { data, error } = await supabase
         .from('cursos')
@@ -32,8 +38,13 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
       if (error) throw error;
 
       setCourses(data || []);
+      
+      // If no course is selected, or the selected one is no longer visible, select the first available.
       if (data && data.length > 0) {
-        setSelectedCourseId(data[0].id);
+        const currentSelectionExists = data.some(c => c.id === selectedCourseId);
+        if (!selectedCourseId || !currentSelectionExists) {
+            setSelectedCourseId(data[0].id);
+        }
       } else {
         setSelectedCourseId('');
       }
@@ -47,13 +58,34 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
   };
 
   useEffect(() => {
+    // Fetch initial data
     fetchCourses();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('cursos-realtime-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'cursos' },
+        (payload) => {
+          console.log('Real-time change received!', payload);
+          // Refetch all courses to ensure the list is perfectly in sync
+          fetchCourses();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on component unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const handleCourseCreated = () => {
-    fetchCourses();
-    // No cerramos el modal para que el admin pueda seguir gestionando
+    // The real-time listener will automatically call fetchCourses(), 
+    // so we don't strictly need this call, but it can make the UI feel faster.
+    fetchCourses(); 
   };
 
   const handleSubmit = (e: React.FormEvent) => {

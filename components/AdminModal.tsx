@@ -44,6 +44,15 @@ const DownloadIcon: React.FC = () => (
   </svg>
 );
 
+const TrashIcon: React.FC = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    <line x1="10" y1="11" x2="10" y2="17"></line>
+    <line x1="14" y1="11" x2="14" y2="17"></line>
+  </svg>
+);
+
 
 const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => {
   const [password, setPassword] = useState('');
@@ -59,6 +68,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
   const [pendingChanges, setPendingChanges] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [downloading, setDownloading] = useState<{ id: string | null; type: 'csv' | 'html' | null }>({ id: null, type: null });
+  const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
 
   
   const fetchAdminCourses = async () => {
@@ -444,6 +454,35 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
     }
   };
   
+  const handleDeleteCourse = async (courseId: string, courseName: string) => {
+    const confirmation = window.confirm(
+      `¿Estás absolutamente seguro de que quieres eliminar el curso "${courseName}"?\n\n` +
+      `ESTA ACCIÓN ES IRREVERSIBLE y eliminará permanentemente el curso y TODOS los registros de asistencia asociados a él.`
+    );
+
+    if (!confirmation) return;
+
+    setDeletingCourseId(courseId);
+    try {
+      const { error } = await supabase
+        .from('cursos')
+        .delete()
+        .eq('id', courseId);
+
+      if (error) throw error;
+      
+      alert(`El curso "${courseName}" y todos sus participantes han sido eliminados.`);
+      // Optimistically remove from UI
+      setAdminCourses(currentCourses => currentCourses.filter(c => c.id !== courseId));
+      onCourseCreated(); // This re-triggers a fetch in the parent, ensuring sync
+    } catch (err: any) {
+      console.error('Error deleting course:', err);
+      alert(`No se pudo eliminar el curso: ${getErrorMessage(err)}`);
+    } finally {
+      setDeletingCourseId(null);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Fecha no definida';
     const [year, month, day] = dateString.split('-');
@@ -482,7 +521,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
             </form>
           </NeumorphicCard>
         ) : (
-          <NeumorphicCard className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+          <NeumorphicCard className="w-full max-w-5xl max-h-[90vh] overflow-y-auto">
              <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Crear Nuevo Curso</h2>
              <form onSubmit={handleCreateCourse} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -508,12 +547,12 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                   <>
                     <div className="space-y-3 max-h-60 overflow-y-auto p-1 pr-3">
                         {adminCourses.map(course => (
-                            <div key={course.id} className="flex flex-wrap items-center justify-between gap-y-2 bg-slate-50/80 p-3 rounded-lg shadow-[inset_3px_3px_6px_#c7ced4,inset_-3px_-3px_6px_#ffffff]">
+                            <div key={course.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-slate-50/80 p-3 rounded-lg shadow-[inset_3px_3px_6px_#c7ced4,inset_-3px_-3px_6px_#ffffff]">
                                 <div className="flex-grow pr-4">
                                     <p className="font-semibold text-gray-800 text-sm truncate" title={course.name}>{course.name}</p>
                                     <p className="text-xs text-gray-500">{formatDate(course.date)}</p>
                                 </div>
-                                <div className="flex items-center gap-2 flex-shrink-0">
+                                <div className="flex items-center justify-end gap-2 flex-wrap">
                                   <SegmentedControl
                                     options={[
                                       { label: 'Visible', value: true, activeClassName: 'bg-green-200 text-green-800' },
@@ -521,21 +560,29 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                                     ]}
                                     value={course.is_visible}
                                     onChange={(newValue) => handleVisibilityToggle(course.id, newValue)}
-                                    disabled={isSaving || downloading.id !== null}
+                                    disabled={isSaving || downloading.id !== null || deletingCourseId !== null}
                                   />
                                   <NeumorphicButton
                                     onClick={() => handleDownloadCsv(course.id, course.name, course.date)}
-                                    disabled={downloading.id !== null}
+                                    disabled={downloading.id !== null || deletingCourseId !== null}
                                     className="!py-1 !px-3 text-xs whitespace-nowrap flex items-center gap-1.5"
                                   >
                                     {downloading.id === course.id && downloading.type === 'csv' ? '...' : <><DownloadIcon /> CSV</>}
                                   </NeumorphicButton>
                                   <NeumorphicButton
                                     onClick={() => handleDownloadHtml(course)}
-                                    disabled={downloading.id !== null}
+                                    disabled={downloading.id !== null || deletingCourseId !== null}
                                     className="!py-1 !px-3 text-xs whitespace-nowrap flex items-center gap-1.5"
                                   >
                                     {downloading.id === course.id && downloading.type === 'html' ? '...' : <><DownloadIcon /> HTML</>}
+                                  </NeumorphicButton>
+                                   <NeumorphicButton
+                                    onClick={() => handleDeleteCourse(course.id, course.name)}
+                                    disabled={isSaving || downloading.id !== null || deletingCourseId !== null}
+                                    className="!py-1 !px-3 text-xs !bg-red-100 !text-red-700 hover:!text-red-900 active:!shadow-[inset_1px_1px_2px_#d9b8b8,inset_-1px_-1px_2px_#ffffff]"
+                                    aria-label={`Eliminar curso ${course.name}`}
+                                  >
+                                    {deletingCourseId === course.id ? '...' : <TrashIcon />}
                                   </NeumorphicButton>
                                 </div>
                             </div>
@@ -544,7 +591,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                     <div className="mt-4 flex justify-center">
                       <NeumorphicButton
                         onClick={handleSaveChanges}
-                        disabled={Object.keys(pendingChanges).length === 0 || isSaving || downloading.id !== null}
+                        disabled={Object.keys(pendingChanges).length === 0 || isSaving || downloading.id !== null || deletingCourseId !== null}
                       >
                         {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                       </NeumorphicButton>
