@@ -142,6 +142,47 @@ export const constanciaStyles = `
     color: #003366;
   }
 
+  .print-button-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+  }
+
+  .print-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #e0e5ec;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #003366;
+    cursor: pointer;
+    box-shadow: 5px 5px 10px #c7ced4, -5px -5px 10px #ffffff;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .print-button:active:not(:disabled) {
+    box-shadow: inset 2px 2px 5px #c7ced4, inset -2px -2px 5px #ffffff;
+    color: #0055a4;
+  }
+  
+  .print-button:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+
+  .print-button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+
   @media print {
     body {
       padding: 0;
@@ -152,6 +193,9 @@ export const constanciaStyles = `
       box-shadow: none;
       width: 100%;
       height: 100%;
+    }
+    .print-button-container {
+      display: none !important;
     }
   }
 `;
@@ -175,53 +219,111 @@ const ConstanciaTemplate: React.FC<ConstanciaTemplateProps> = ({ participant, co
   const courseLocation = course ? course.location : 'Lugar no disponible';
   const courseDate = course ? formatDate(course.date) : 'Fecha no disponible';
 
-  return (
-    <div className="page">
-      <table className="layout-table">
-        <tbody>
-          <tr className="header-row">
-            <td className="header-cell">
-              <div className="header-content">
-                <img src="https://raw.githubusercontent.com/vdhuerta/assets-aplications/main/Logo%20UAD%20Redondo.png" alt="Logo UAD" />
-                <div className="header-text">
-                  <h1>Unidad de Acompañamiento Docente</h1>
-                  <p>Vicerrectoría Académica</p>
-                </div>
-              </div>
-            </td>
-          </tr>
-          
-          <tr className="content-row">
-            <td className="content-cell">
-              <h2>Constancia de Participación</h2>
-              <p>La Unidad de Acompañamiento Docente (UAD) otorga la presente constancia a:</p>
-              <p className="participant-name">{fullName}</p>
-              <p className="participant-rut">RUT: {rut}</p>
-              <p>Por su destacada participación en el curso:</p>
-              <p className="course-name">"{courseName}"</p>
-            </td>
-          </tr>
+  const participantNameForFile = `${participant.firstName}_${participant.paternalLastName}`.replace(/\s+/g, '_');
+  
+  // Script de JavaScript puro para la generación de PDF. Se inyecta en el HTML estático.
+  const pdfGenerationScript = `
+    document.addEventListener('DOMContentLoaded', function() {
+      const btn = document.getElementById('pdfBtn');
+      if (!btn) return;
 
-          <tr className="footer-row">
-            <td className="footer-cell">
-              <div className="footer-content">
-                <div className="verification">
-                  <img src={qrCodeUrl} alt="Código QR de Verificación" />
-                  <div className="verification-text">
-                    <p><strong>Verificar Constancia:</strong></p>
-                    <p>Escanee el código QR para validar este documento.</p>
-                    <p>ID: <code>{verificationId}</code></p>
+      const originalContent = btn.innerHTML;
+
+      btn.addEventListener('click', function() {
+        if (btn.disabled) return;
+        
+        btn.disabled = true;
+        btn.innerHTML = 'Generando PDF...';
+
+        const element = document.getElementById('constancia-page');
+        
+        const opt = {
+          margin: 0,
+          filename: 'Constancia_${participantNameForFile}.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' },
+        };
+
+        if (typeof html2pdf === 'undefined') {
+          alert('Error: La librería de generación de PDF no se pudo cargar. Verifique su conexión a internet.');
+          btn.disabled = false;
+          btn.innerHTML = originalContent;
+          return;
+        }
+
+        html2pdf().from(element).set(opt).save()
+          .catch((err) => {
+            console.error("Error al generar el PDF:", err);
+            alert("Ocurrió un error al generar el PDF.");
+          })
+          .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+          });
+      });
+    });
+  `;
+
+  return (
+    <>
+      <div className="page" id="constancia-page">
+        <table className="layout-table">
+          <tbody>
+            <tr className="header-row">
+              <td className="header-cell">
+                <div className="header-content">
+                  <img src="https://raw.githubusercontent.com/vdhuerta/assets-aplications/main/Logo%20UAD%20Redondo.png" alt="Logo UAD" />
+                  <div className="header-text">
+                    <h1>Unidad de Acompañamiento Docente</h1>
+                    <p>Vicerrectoría Académica</p>
                   </div>
                 </div>
-                <div className="date-location">
-                  <p>{courseLocation}, {courseDate}</p>
+              </td>
+            </tr>
+            
+            <tr className="content-row">
+              <td className="content-cell">
+                <h2>Constancia de Participación</h2>
+                <p>La Unidad de Acompañamiento Docente (UAD) otorga la presente constancia a:</p>
+                <p className="participant-name">{fullName}</p>
+                <p className="participant-rut">RUT: {rut}</p>
+                <p>Por su destacada participación en el curso:</p>
+                <p className="course-name">"{courseName}"</p>
+              </td>
+            </tr>
+
+            <tr className="footer-row">
+              <td className="footer-cell">
+                <div className="footer-content">
+                  <div className="verification">
+                    <img src={qrCodeUrl} alt="Código QR de Verificación" />
+                    <div className="verification-text">
+                      <p><strong>Verificar Constancia:</strong></p>
+                      <p>Escanee el código QR para validar este documento.</p>
+                      <p>ID: <code>{verificationId}</code></p>
+                    </div>
+                  </div>
+                  <div className="date-location">
+                    <p>{courseLocation}, {courseDate}</p>
+                  </div>
                 </div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="print-button-container">
+        <button id="pdfBtn" className="print-button">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6 3.125A2.25 2.25 0 0 1 8.25 1h7.5A2.25 2.25 0 0 1 18 3.125l.001 10.704M18 13.828c-.24.03-.48.062-.72.096m.72-.096A42.417 42.417 0 0 0 12 13.5m0 0a42.417 42.417 0 0 0-6.72 3.329m6.72-3.329a42.417 42.417 0 0 1 6.72 3.329M3 19.5a1.5 1.5 0 0 1 1.5-1.5h15a1.5 1.5 0 0 1 1.5 1.5v.625a1.5 1.5 0 0 1-1.5 1.5h-15a1.5 1.5 0 0 1-1.5-1.5v-.625Z" />
+          </svg>
+          Convertir a PDF
+        </button>
+      </div>
+      <script dangerouslySetInnerHTML={{ __html: pdfGenerationScript }} />
+    </>
   );
 };
 

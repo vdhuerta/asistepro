@@ -12,15 +12,14 @@ interface ParticipantListProps {
   courseDetails: CourseDetails;
 }
 
-const ViewCertificateIcon: React.FC = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M9 2a1 1 0 00-1 1v1.132l-3.321 1.51a1 1 0 00-.54 1.054l.5 3.5A1 1 0 006 11.236V16a1 1 0 001 1h6a1 1 0 001-1v-4.764a1 1 0 00.362-1.04l.5-3.5a1 1 0 00-.54-1.054L12 4.132V3a1 1 0 00-1-1H9zm2 10a1 1 0 10-2 0v.01a1 1 0 102 0V12z" clipRule="evenodd" />
-    <path d="M3 6a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
+const DownloadCertificateIcon: React.FC = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
   </svg>
 );
 
 const LoadingSpinner: React.FC = () => (
-  <svg className="animate-spin h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+  <svg className="animate-spin h-6 w-6 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
   </svg>
@@ -69,6 +68,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, courseD
             <meta charset="UTF-8" />
             <title>Constancia de Participación - ${participant.firstName} ${participant.paternalLastName}</title>
             <style>${constanciaStyles}</style>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
           </head>
           <body>
             ${pageContent}
@@ -102,7 +102,38 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, courseD
     <div className="w-full mt-10">
       <NeumorphicCard>
         <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">Participantes Registrados ({participants.length})</h2>
-        <div className="overflow-x-auto">
+        
+        {/* Mobile View: Card List */}
+        <div className="md:hidden space-y-4">
+          {participants.map((p) => (
+            <div key={p.id} className="bg-slate-50/80 p-4 rounded-lg shadow-[inset_3px_3px_6px_#c7ced4,inset_-3px_-3px_6px_#ffffff]">
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex-grow">
+                  <p className="font-bold text-gray-800 break-words">
+                    {`${p.firstName} ${p.paternalLastName} ${p.maternalLastName}`}
+                  </p>
+                  <p className="text-sm text-gray-600">{p.rut}</p>
+                  <p className="text-xs text-gray-500 break-all mt-1">{p.email}</p>
+                </div>
+                <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                  <img src={p.signature} alt="Firma" className="h-10 w-auto max-w-[100px] bg-white rounded shadow-sm" />
+                  <button
+                    onClick={() => handleShowConstancia(p)}
+                    disabled={generatingId !== null}
+                    className="p-2 rounded-full text-blue-600 hover:bg-blue-100 disabled:text-gray-400 disabled:cursor-wait disabled:hover:bg-transparent transition-colors duration-200"
+                    title="Descargar Constancia"
+                    aria-label="Descargar Constancia"
+                  >
+                    {generatingId === p.id ? <LoadingSpinner /> : <DownloadCertificateIcon />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full min-w-[900px] text-sm text-left text-gray-600">
             <thead className="text-xs text-gray-700 uppercase">
               <tr>
@@ -129,10 +160,10 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, courseD
                       onClick={() => handleShowConstancia(p)}
                       disabled={generatingId !== null}
                       className="p-2 rounded-full text-blue-600 hover:bg-blue-100 disabled:text-gray-400 disabled:cursor-wait disabled:hover:bg-transparent transition-colors duration-200"
-                      title="Ver Constancia"
-                      aria-label="Ver Constancia"
+                      title="Descargar Constancia"
+                      aria-label="Descargar Constancia"
                     >
-                      {generatingId === p.id ? <LoadingSpinner /> : <ViewCertificateIcon />}
+                      {generatingId === p.id ? <LoadingSpinner /> : <DownloadCertificateIcon />}
                     </button>
                   </td>
                 </tr>
