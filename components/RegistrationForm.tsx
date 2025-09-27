@@ -192,6 +192,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
   const [isRutValid, setIsRutValid] = useState(true);
+  const [isRutDuplicate, setIsRutDuplicate] = useState(false);
   const [hasSigned, setHasSigned] = useState(false);
   
   const [suggestions, setSuggestions] = useState<Participant[]>([]);
@@ -214,8 +215,42 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
     ];
     const allFieldsFilled = requiredFields.every(field => field.trim() !== '');
     const isRutFormatValid = rutRegex.test(rut);
-    setIsFormValid(allFieldsFilled && hasSigned && isRutFormatValid);
-  }, [formData, hasSigned, rutRegex]);
+    setIsFormValid(allFieldsFilled && hasSigned && isRutFormatValid && !isRutDuplicate);
+  }, [formData, hasSigned, isRutDuplicate, rutRegex]);
+  
+  // Real-time check for duplicate RUT
+  useEffect(() => {
+      if (!isRutValid || !formData.rut) {
+          setIsRutDuplicate(false);
+          return;
+      }
+
+      const checkDuplicate = async () => {
+          const { data, error } = await supabase
+              .from('asistencias')
+              .select('id')
+              .eq('rut', formData.rut.trim().toUpperCase())
+              .eq('curso_id', courseDetails.id)
+              .limit(1);
+
+          if (error) {
+              console.error('Error checking for duplicate RUT:', error);
+              setIsRutDuplicate(false); // Fail safely
+              return;
+          }
+
+          setIsRutDuplicate(data && data.length > 0);
+      };
+
+      const handler = setTimeout(() => {
+          checkDuplicate();
+      }, 500);
+
+      return () => {
+          clearTimeout(handler);
+      };
+  }, [formData.rut, courseDetails.id, isRutValid]);
+
 
   useEffect(() => {
     const search = async () => {
@@ -333,6 +368,28 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
 
     setIsSubmitting(true);
 
+    // Final check before submission, just in case
+    const { data: existingParticipant, error: checkError } = await supabase
+      .from('asistencias')
+      .select('nombres, apellido_paterno')
+      .eq('rut', formData.rut.trim().toUpperCase())
+      .eq('curso_id', courseDetails.id)
+      .limit(1);
+
+    if (checkError) {
+      console.error("Error checking for existing participant:", checkError);
+      alert(`Hubo un error al verificar si el participante ya existe: ${checkError.message}`);
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (existingParticipant && existingParticipant.length > 0) {
+      const participantName = `${existingParticipant[0].nombres} ${existingParticipant[0].apellido_paterno}`;
+      alert(`El participante ${participantName} con RUT ${formData.rut} ya ha sido registrado en este curso.`);
+      setIsSubmitting(false);
+      return;
+    }
+
     const signature = signaturePadRef.current?.getSignatureAsDataURL() || '';
 
     const newParticipantData = {
@@ -405,11 +462,14 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
               onChange={handleInputChange} 
               required 
               maxLength={10}
-              className={!isRutValid && formData.rut.length > 0 ? 'ring-2 ring-red-400 shadow-[inset_2px_2px_5px_#fbdada,inset_-2px_-2px_5px_#ffffff]' : ''}
+              className={(!isRutValid && formData.rut.length > 0) || isRutDuplicate ? 'ring-2 ring-red-400 shadow-[inset_2px_2px_5px_#fbdada,inset_-2px_-2px_5px_#ffffff]' : ''}
               autoComplete="off"
             />
-            {!isRutValid && formData.rut.length > 0 && (
+            {(!isRutValid && formData.rut.length > 0) && (
               <p className="text-xs text-red-600 mt-1">Formato de RUT inválido. Use: 12345678-K, sin puntos.</p>
+            )}
+             {isRutDuplicate && (
+              <p className="text-xs text-red-600 mt-1">RUT ya registrado en este curso.</p>
             )}
             {showSuggestions && formData.rut.length >= 4 && (
               <div className="absolute top-full left-0 right-0 mt-2 z-20">
