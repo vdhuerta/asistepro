@@ -220,6 +220,7 @@ const ConstanciaTemplate: React.FC<ConstanciaTemplateProps> = ({ participant, co
   const courseName = course ? course.name : 'Curso no disponible';
   const courseLocation = course ? course.location : 'Lugar no disponible';
   const courseDate = course ? formatDate(course.date) : 'Fecha no disponible';
+  const durationText = course?.duration ? `, con una duración total de ${course.duration} minutos` : '';
 
   const participantNameForFile = `${participant.firstName}_${participant.paternalLastName}`.replace(/\s+/g, '_');
   
@@ -298,8 +299,11 @@ const ConstanciaTemplate: React.FC<ConstanciaTemplateProps> = ({ participant, co
                 <p>La Unidad de Acompañamiento Docente (UAD) otorga la presente constancia a:</p>
                 <p className="participant-name">{fullName}</p>
                 <p className="participant-rut">RUT: {rut}</p>
-                <p>Por su destacada participación en el curso:</p>
-                <p className="course-name">"{courseName}"</p>
+                <p>
+                  Por su destacada participación en el curso: 
+                  <br/>
+                  <span className="course-name">"{courseName}"</span>{durationText}.
+                </p>
               </td>
             </tr>
 
@@ -311,6 +315,7 @@ const ConstanciaTemplate: React.FC<ConstanciaTemplateProps> = ({ participant, co
                     <div className="verification-text">
                       <p><strong>Verificar Constancia:</strong></p>
                       <p>Escanee el código QR para validar este documento.</p>
+                      {/* FIX: Corrected a malformed `<code>` tag that was causing a parsing error. */}
                       <p>ID: <code>{verificationId}</code></p>
                     </div>
                   </div>

@@ -447,6 +447,20 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
 
     setIsSubmitting(false);
   };
+  
+  if (!courseDetails.is_registration_open) {
+    return (
+      <NeumorphicCard className="w-full bg-amber-50 text-center p-8">
+        <h2 className="text-xl font-bold text-amber-800 mb-4">Registro Cerrado</h2>
+        <p className="text-amber-700">El período de registro para este curso ha finalizado. No se aceptan nuevas inscripciones.</p>
+        <div className="mt-8 flex justify-center">
+          <NeumorphicButton type="button" onClick={onGoBack}>
+            Volver
+          </NeumorphicButton>
+        </div>
+      </NeumorphicCard>
+    );
+  }
 
   return (
     <NeumorphicCard className="w-full bg-teal-50">

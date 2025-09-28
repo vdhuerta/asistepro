@@ -9,6 +9,8 @@ export interface CourseDetails {
   time?: string; // HH:MM
   person_in_charge?: string;
   is_visible: boolean;
+  duration?: number; // Duración en minutos
+  is_registration_open: boolean;
 }
 
 export interface Participant {

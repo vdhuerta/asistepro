@@ -28,10 +28,11 @@ const Header: React.FC<HeaderProps> = ({ details }) => {
         
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-blue-800 mb-2">{details.name}</h1>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-1 text-gray-600">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-1 text-gray-600">
             <p><span className="font-semibold">Lugar:</span> {details.location}</p>
             <p><span className="font-semibold">Ofertante:</span> {details.provider}</p>
             <p><span className="font-semibold">Fecha:</span> {formatDate(details.date)}</p>
+            <p><span className="font-semibold">Duración:</span> {details.duration ? `${details.duration} min.` : 'N/A'}</p>
           </div>
         </div>
       </NeumorphicCard>

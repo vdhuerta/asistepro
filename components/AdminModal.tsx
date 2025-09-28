@@ -17,6 +17,7 @@ const initialCourseState = {
     location: '',
     provider: '',
     person_in_charge: '',
+    duration: '',
 };
 
 const getErrorMessage = (error: unknown): string => {
@@ -65,7 +66,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
   const [adminCourses, setAdminCourses] = useState<CourseDetails[]>([]);
   const [isFetchingCourses, setIsFetchingCourses] = useState(false);
   
-  const [pendingChanges, setPendingChanges] = useState<Record<string, boolean>>({});
+  const [pendingChanges, setPendingChanges] = useState<Record<string, Partial<Pick<CourseDetails, 'is_visible' | 'is_registration_open'>>>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [downloading, setDownloading] = useState<{ id: string | null; type: 'csv' | 'html' | null }>({ id: null, type: null });
   const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
@@ -89,6 +90,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
       const courses = (data as CourseDetails[]).map(course => ({
         ...course,
         is_visible: course.is_visible ?? true,
+        is_registration_open: course.is_registration_open ?? true,
       }));
       setAdminCourses(courses);
       setPendingChanges({}); // Reset pending changes on fetch
@@ -127,7 +129,12 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
     if (isSubmitting) return;
     setIsSubmitting(true);
     
-    const newCourse = { ...courseData, is_visible: true };
+    const newCourse = { 
+        ...courseData, 
+        duration: courseData.duration ? parseInt(courseData.duration, 10) : null,
+        is_visible: true,
+        is_registration_open: true,
+    };
 
     const { error } = await supabase
       .from('cursos')
@@ -151,15 +158,11 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
     setIsSubmitting(false);
   };
   
-  const handleVisibilityToggle = (courseId: string, newVisibility: boolean) => {
-    setAdminCourses(currentCourses =>
-      currentCourses.map(c =>
-        c.id === courseId ? { ...c, is_visible: newVisibility } : c
-      )
-    );
+  const handleCourseDataChange = (courseId: string, field: 'is_visible' | 'is_registration_open', value: boolean) => {
+    setAdminCourses(courses => courses.map(c => c.id === courseId ? { ...c, [field]: value } : c));
     setPendingChanges(prev => ({
-      ...prev,
-      [courseId]: newVisibility,
+        ...prev,
+        [courseId]: { ...prev[courseId], [field]: value }
     }));
   };
 
@@ -169,10 +172,10 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
     setIsSaving(true);
     setError('');
 
-    const updatePromises = Object.entries(pendingChanges).map(([courseId, newVisibility]) => 
+    const updatePromises = Object.entries(pendingChanges).map(([courseId, changes]) => 
       supabase
         .from('cursos')
-        .update({ is_visible: newVisibility })
+        .update(changes)
         .eq('id', courseId)
     );
 
@@ -329,6 +332,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                     <p><strong>Lugar:</strong> ${course.location}</p>
                     <p><strong>Ofertante:</strong> ${course.provider}</p>
                     <p><strong>Fecha:</strong> ${formatDateForReport(course.date)}</p>
+                    <p><strong>Duración:</strong> ${course.duration ? `${course.duration} minutos` : 'No especificada'}</p>
                 </div>
             </header>
             <main>
@@ -541,6 +545,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                     <NeumorphicInput label="Encargado" name="person_in_charge" value={courseData.person_in_charge} onChange={handleInputChange} />
                     <NeumorphicInput label="Fecha" name="date" type="date" value={courseData.date} onChange={handleInputChange} required className="block min-w-0" />
                     <NeumorphicInput label="Hora" name="time" type="time" value={courseData.time} onChange={handleInputChange} className="block min-w-0" />
+                    <NeumorphicInput label="Duración (minutos)" name="duration" type="number" value={courseData.duration} onChange={handleInputChange} className="block min-w-0" />
                 </div>
                 <div className="pt-4 flex justify-center gap-4">
                     <NeumorphicButton type="submit" disabled={isSubmitting} className="!py-2 !px-6">
@@ -567,11 +572,22 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                                     className="border border-slate-300"
                                     buttonClassName="text-[11px]"
                                     options={[
+                                      { label: 'Habilitado', value: true, activeClassName: 'bg-sky-200 text-sky-800' },
+                                      { label: 'Cerrado', value: false, activeClassName: 'bg-amber-200 text-amber-800' },
+                                    ]}
+                                    value={course.is_registration_open}
+                                    onChange={(newValue) => handleCourseDataChange(course.id, 'is_registration_open', newValue)}
+                                    disabled={isSaving || downloading.id !== null || deletingCourseId !== null}
+                                  />
+                                  <SegmentedControl
+                                    className="border border-slate-300"
+                                    buttonClassName="text-[11px]"
+                                    options={[
                                       { label: 'Visible', value: true, activeClassName: 'bg-green-200 text-green-800' },
                                       { label: 'Oculto', value: false, activeClassName: 'bg-red-200 text-red-800' },
                                     ]}
                                     value={course.is_visible}
-                                    onChange={(newValue) => handleVisibilityToggle(course.id, newValue)}
+                                    onChange={(newValue) => handleCourseDataChange(course.id, 'is_visible', newValue)}
                                     disabled={isSaving || downloading.id !== null || deletingCourseId !== null}
                                   />
                                   <NeumorphicButton
