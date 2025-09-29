@@ -71,6 +71,24 @@ function App() {
     setShowSuccessModal(true);
   };
 
+  const handleDeleteParticipant = async (participantId: string) => {
+    const { error } = await supabase
+      .from('asistencias')
+      .delete()
+      .eq('id', participantId);
+
+    if (error) {
+      console.error('Error deleting participant:', error);
+      alert(`Error al eliminar al participante: ${error.message}`);
+      throw error; // Propagate error to the child component if needed
+    } else {
+      // On success, update the local state to reflect the change
+      setParticipants(prevParticipants => 
+        prevParticipants.filter(p => p.id !== participantId)
+      );
+    }
+  };
+
   const handleGoBack = () => {
     setCourseDetails(null);
   };
@@ -111,7 +129,11 @@ function App() {
               courseDetails={courseDetails}
               onGoBack={handleGoBack}
             />
-            <ParticipantList participants={participants} courseDetails={courseDetails} />
+            <ParticipantList 
+              participants={participants} 
+              courseDetails={courseDetails} 
+              onDeleteParticipant={handleDeleteParticipant}
+            />
           </main>
         </div>
         <footer className="w-full text-center text-gray-600 text-[8px] py-4 mt-8">
