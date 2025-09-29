@@ -79,10 +79,18 @@ function App() {
 
     if (error) {
       console.error('Error deleting participant:', error);
-      alert(`Error al eliminar al participante: ${error.message}`);
-      throw error; // Propagate error to the child component if needed
+      let userMessage = `Error al eliminar al participante: ${error.message}`;
+
+      // Check for common RLS-related errors
+      if (error.message.includes('security policy') || error.message.includes('permission denied')) {
+          userMessage = 'La eliminación fue bloqueada por las políticas de seguridad de la base de datos (RLS). ' +
+                        'Por favor, asegúrese de que exista una política que permita la eliminación (DELETE) en la tabla "asistencias". ' +
+                        'Consulte las instrucciones para agregarla desde el editor SQL de Supabase.';
+      }
+
+      alert(userMessage);
+      throw error;
     } else {
-      // On success, update the local state to reflect the change
       setParticipants(prevParticipants => 
         prevParticipants.filter(p => p.id !== participantId)
       );
