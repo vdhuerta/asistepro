@@ -109,6 +109,11 @@ export const constanciaStyles = `
     font-weight: 600;
     font-style: italic;
   }
+  .course-duration {
+    font-size: 11pt;
+    color: #555;
+    margin-top: 0.5rem;
+  }
 
   /* Footer */
   .footer-cell {
@@ -220,7 +225,11 @@ const ConstanciaTemplate: React.FC<ConstanciaTemplateProps> = ({ participant, co
   const courseName = course ? course.name : 'Curso no disponible';
   const courseLocation = course ? course.location : 'Lugar no disponible';
   const courseDate = course ? formatDate(course.date) : 'Fecha no disponible';
-  const durationText = course?.duration ? `, con una duración total de ${course.duration} minutos` : '';
+  
+  // Lógica de duración mejorada: por defecto a 0 si es nulo, indefinido o negativo.
+  const durationInMinutes = (course?.duration && course.duration > 0) ? course.duration : 0;
+  const durationInHours = Number((durationInMinutes / 60).toFixed(1)).toString().replace('.', ',');
+
 
   const participantNameForFile = `${participant.firstName}_${participant.paternalLastName}`.replace(/\s+/g, '_');
   
@@ -302,7 +311,10 @@ const ConstanciaTemplate: React.FC<ConstanciaTemplateProps> = ({ participant, co
                 <p>
                   Por su destacada participación en el curso: 
                   <br/>
-                  <span className="course-name">"{courseName}"</span>{durationText}.
+                  <span className="course-name">"{courseName}"</span>.
+                </p>
+                <p className="course-duration">
+                  Duración: {durationInHours} Horas
                 </p>
               </td>
             </tr>

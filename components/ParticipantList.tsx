@@ -33,12 +33,44 @@ const LoadingSpinner: React.FC = () => (
   </svg>
 );
 
+const maskRut = (rut: string): string => {
+  if (!rut || rut.length < 3) {
+    return rut;
+  }
+  const cleanRut = rut.replace(/\./g, '').toUpperCase();
+  const parts = cleanRut.split('-');
+  if (parts.length !== 2) {
+    return rut; // Invalid format, return as is
+  }
+  const [body, dv] = parts;
+
+  if (body.length <= 4) {
+    return `${'*'.repeat(body.length)}-${dv}`;
+  }
+  
+  const start = body.slice(0, 2);
+  const end = body.slice(-2);
+  const maskedLength = body.length - start.length - end.length;
+  const masked = '*'.repeat(maskedLength);
+  
+  return `${start}${masked}${end}-${dv}`;
+};
+
+
 const ParticipantList: React.FC<ParticipantListProps> = ({ participants, courseDetails, onDeleteParticipant }) => {
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  
+  // State for delete modal
   const [participantToDelete, setParticipantToDelete] = useState<Participant | null>(null);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  
+  // State for certificate modal
+  const [participantForCertificate, setParticipantForCertificate] = useState<Participant | null>(null);
+  const [certificatePassword, setCertificatePassword] = useState('');
+  const [certificatePasswordError, setCertificatePasswordError] = useState('');
+
   const ADMIN_PASSWORD = '070670'; // Same password as in AdminModal
 
   const handleShowConstancia = async (participant: Participant) => {
@@ -136,6 +168,32 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, courseD
       setDeletingId(null);
     }
   };
+  
+  const handleInitiateCertificateDownload = (participant: Participant) => {
+    if (generatingId || deletingId) return;
+    setCertificatePassword('');
+    setCertificatePasswordError('');
+    setParticipantForCertificate(participant);
+  };
+
+  const handleCancelCertificateDownload = () => {
+    setParticipantForCertificate(null);
+  };
+
+  const handleConfirmCertificateDownload = async () => {
+    if (!participantForCertificate) return;
+
+    const rutBody = participantForCertificate.rut.split('-')[0].replace(/\./g, '');
+    const correctKey = rutBody.slice(-4);
+    
+    if (certificatePassword === correctKey) {
+        // Correct password, proceed to generate
+        handleCancelCertificateDownload(); // Close modal
+        await handleShowConstancia(participantForCertificate);
+    } else {
+        setCertificatePasswordError('Clave incorrecta. Intente de nuevo.');
+    }
+  };
 
 
   if (participants.length === 0) {
@@ -157,14 +215,14 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, courseD
                     <p className="font-bold text-gray-800 break-words">
                       {`${p.firstName} ${p.paternalLastName} ${p.maternalLastName}`}
                     </p>
-                    <p className="text-sm text-gray-600">{p.rut}</p>
+                    <p className="text-sm text-gray-600">{maskRut(p.rut)}</p>
                     <p className="text-xs text-gray-500 break-all mt-1">{p.email}</p>
                   </div>
                   <div className="flex-shrink-0 flex flex-col items-center gap-2">
                     <img src={p.signature} alt="Firma" className="h-10 w-auto max-w-[100px] bg-white rounded shadow-sm" />
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleShowConstancia(p)}
+                        onClick={() => handleInitiateCertificateDownload(p)}
                         disabled={generatingId !== null || deletingId !== null}
                         className="p-2 rounded-full text-blue-600 hover:bg-blue-100 disabled:text-gray-400 disabled:cursor-wait disabled:hover:bg-transparent transition-colors duration-200"
                         title="Descargar Constancia"
@@ -206,7 +264,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, courseD
                     <td className="px-6 py-4 font-medium whitespace-nowrap">
                       {`${p.firstName} ${p.paternalLastName} ${p.maternalLastName}`}
                     </td>
-                    <td className="px-6 py-4">{p.rut}</td>
+                    <td className="px-6 py-4">{maskRut(p.rut)}</td>
                     <td className="px-6 py-4">{p.email}</td>
                     <td className="px-6 py-4">
                       <img src={p.signature} alt="Firma" className="h-8 w-auto bg-white rounded shadow-sm" />
@@ -214,7 +272,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, courseD
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => handleShowConstancia(p)}
+                          onClick={() => handleInitiateCertificateDownload(p)}
                           disabled={generatingId !== null || deletingId !== null}
                           className="p-2 rounded-full text-blue-600 hover:bg-blue-100 disabled:text-gray-400 disabled:cursor-wait disabled:hover:bg-transparent transition-colors duration-200"
                           title="Descargar Constancia"
@@ -241,6 +299,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, courseD
         </NeumorphicCard>
       </div>
 
+      {/* Delete Confirmation Modal */}
       {participantToDelete && (
         <div 
           className="fixed inset-0 bg-slate-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
@@ -278,6 +337,62 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, courseD
                      className="!py-2 !px-6 !bg-red-200 !text-red-800 hover:!text-red-900 active:!shadow-[inset_1px_1px_2px_#d9b8b8,inset_-1px_-1px_2px_#ffffff]"
                    >
                       Eliminar
+                   </NeumorphicButton>
+                </div>
+              </div>
+            </NeumorphicCard>
+          </div>
+        </div>
+      )}
+      
+      {/* Certificate Password Modal */}
+      {participantForCertificate && (
+        <div 
+          className="fixed inset-0 bg-slate-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
+          onClick={handleCancelCertificateDownload}
+        >
+          <div onClick={(e) => e.stopPropagation()}>
+            <NeumorphicCard className="w-full max-w-md bg-sky-50">
+              <h2 className="text-xl font-bold text-center text-gray-800 mb-2">Descargar Constancia</h2>
+              <p className="text-center text-gray-600 mb-4">
+                Para proteger la privacidad, ingrese la clave de <strong className="font-semibold">{`${participantForCertificate.firstName} ${participantForCertificate.paternalLastName}`}</strong>.
+              </p>
+              <p className="text-center text-sky-700 text-sm mb-6">
+                <strong>Pista:</strong> La clave son los últimos 4 dígitos del RUT, antes del guion.
+              </p>
+              
+              <div className="space-y-4">
+                <NeumorphicInput
+                  label="Clave de 4 dígitos"
+                  id="certificate-password"
+                  name="password"
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={certificatePassword}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    if (val.length <= 4) {
+                      setCertificatePassword(val);
+                      setCertificatePasswordError('');
+                    }
+                  }}
+                  maxLength={4}
+                  required
+                  autoComplete="off"
+                  onKeyPress={(e) => { if (e.key === 'Enter') handleConfirmCertificateDownload(); }}
+                />
+                {certificatePasswordError && <p className="text-red-500 text-sm text-center">{certificatePasswordError}</p>}
+                <div className="pt-2 flex justify-center gap-4">
+                   <NeumorphicButton type="button" onClick={handleCancelCertificateDownload} className="!py-2 !px-6">
+                      Cancelar
+                   </NeumorphicButton>
+                   <NeumorphicButton 
+                     type="button" 
+                     onClick={handleConfirmCertificateDownload} 
+                     className="!py-2 !px-6 !bg-sky-200 !text-sky-800 hover:!text-sky-900 active:!shadow-[inset_1px_1px_2px_#c3dbe3,inset_-1px_-1px_2px_#ffffff]"
+                   >
+                      Descargar
                    </NeumorphicButton>
                 </div>
               </div>

@@ -542,10 +542,10 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                     <NeumorphicInput label="Nombre del Curso" name="name" value={courseData.name} onChange={handleInputChange} required />
                     <NeumorphicInput label="Ofertante" name="provider" value={courseData.provider} onChange={handleInputChange} required />
                     <NeumorphicInput label="Lugar" name="location" value={courseData.location} onChange={handleInputChange} required />
-                    <NeumorphicInput label="Encargado" name="person_in_charge" value={courseData.person_in_charge} onChange={handleInputChange} />
+                    <NeumorphicInput label="Encargado" name="person_in_charge" value={courseData.person_in_charge} onChange={handleInputChange} required />
                     <NeumorphicInput label="Fecha" name="date" type="date" value={courseData.date} onChange={handleInputChange} required className="block min-w-0" />
-                    <NeumorphicInput label="Hora" name="time" type="time" value={courseData.time} onChange={handleInputChange} className="block min-w-0" />
-                    <NeumorphicInput label="Duración (minutos)" name="duration" type="number" value={courseData.duration} onChange={handleInputChange} className="block min-w-0" />
+                    <NeumorphicInput label="Hora" name="time" type="time" value={courseData.time} onChange={handleInputChange} required className="block min-w-0" />
+                    <NeumorphicInput label="Duración (minutos)" name="duration" type="number" value={courseData.duration} onChange={handleInputChange} required className="block min-w-0" />
                 </div>
                 <div className="pt-4 flex justify-center gap-4">
                     <NeumorphicButton type="submit" disabled={isSubmitting} className="!py-2 !px-6">
