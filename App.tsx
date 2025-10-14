@@ -148,7 +148,7 @@ function App() {
           </main>
         </div>
         <footer className="w-full text-center text-gray-600 text-[8px] py-4 mt-8">
-          <p>Desarrollado por Víctor Huerta © 2025 | UAD</p>
+          <p>Desarrollado por UAD © 2025 | UPLA</p>
         </footer>
       </div>
       {showSuccessModal && (

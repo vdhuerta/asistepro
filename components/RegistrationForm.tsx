@@ -262,10 +262,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
       setShowSuggestions(true);
 
       const { data, error } = await supabase
-        .from('participantes') // <-- UPDATED: Search in the new master table
+        .from('participantes') // Search in the master table
         .select('*')
         .ilike('rut', `${formData.rut}%`)
-        .order('created_at', { ascending: false })
+        .order('nombres', { ascending: true }) // FIX: Order by a reliable field like name.
         .limit(10);
       
       if (error) {
@@ -291,7 +291,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
               teachingSemester: p.semestre_docencia,
               campus: p.sede,
               signature: '', // Don't autofill signature
-              created_at: p.created_at,
+              // FIX: created_at is not used for suggestions and might not exist, so it's removed.
             });
           }
         });
