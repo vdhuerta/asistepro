@@ -262,7 +262,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
       setShowSuggestions(true);
 
       const { data, error } = await supabase
-        .from('participantes')
+        .from('participantes') // <-- UPDATED: Search in the new master table
         .select('*')
         .ilike('rut', `${formData.rut}%`)
         .order('created_at', { ascending: false })
@@ -276,7 +276,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
         data.forEach((p: any) => {
           if (!uniqueParticipantsMap.has(p.rut)) {
             uniqueParticipantsMap.set(p.rut, {
-              id: p.id,
+              id: p.rut, // Use RUT as a key for suggestions
               firstName: p.nombres,
               paternalLastName: p.apellido_paterno,
               maternalLastName: p.apellido_materno,
@@ -368,28 +368,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
 
     setIsSubmitting(true);
 
-    // Final check before submission, just in case
-    const { data: existingParticipant, error: checkError } = await supabase
-      .from('asistencias')
-      .select('nombres, apellido_paterno')
-      .eq('rut', formData.rut.trim().toUpperCase())
-      .eq('curso_id', courseDetails.id)
-      .limit(1);
-
-    if (checkError) {
-      console.error("Error checking for existing participant:", checkError);
-      alert(`Hubo un error al verificar si el participante ya existe: ${checkError.message}`);
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (existingParticipant && existingParticipant.length > 0) {
-      const participantName = `${existingParticipant[0].nombres} ${existingParticipant[0].apellido_paterno}`;
-      alert(`El participante ${participantName} con RUT ${formData.rut} ya ha sido registrado en este curso.`);
-      setIsSubmitting(false);
-      return;
-    }
-
     const signature = signaturePadRef.current?.getSignatureAsDataURL() || '';
 
     const newParticipantData = {
@@ -397,7 +375,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
       nombres: formData.firstName,
       apellido_paterno: formData.paternalLastName,
       apellido_materno: formData.maternalLastName,
-      rut: formData.rut,
+      rut: formData.rut.trim().toUpperCase(),
       email: formData.email,
       telefono: formData.phone,
       rol: formData.role,
@@ -424,6 +402,36 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
     }
 
     if (data) {
+      // Also, create or update the record in the master participants table.
+      // This runs in the background and doesn't block the user.
+      const participantMasterData = {
+        rut: formData.rut.trim().toUpperCase(), // This is the primary key
+        nombres: formData.firstName,
+        apellido_paterno: formData.paternalLastName,
+        apellido_materno: formData.maternalLastName,
+        email: formData.email,
+        telefono: formData.phone,
+        rol: formData.role,
+        facultad: formData.faculty,
+        departamento: formData.department,
+        carrera: formData.major,
+        tipo_contrato: formData.contractType,
+        semestre_docencia: formData.teachingSemester,
+        sede: formData.campus,
+      };
+
+      // Use upsert: if RUT exists, update; otherwise, insert.
+      // This requires 'rut' to be a PRIMARY KEY or have a UNIQUE constraint in the 'participantes' table.
+      const { error: upsertError } = await supabase
+        .from('participantes')
+        .upsert(participantMasterData, { onConflict: 'rut' });
+
+      if (upsertError) {
+        // Log the error but don't bother the user, as the main registration was successful.
+        console.error('Error upserting participant to master list:', upsertError);
+        // Optionally, you could show a non-blocking warning to the admin/user.
+      }
+      
       const participantForState: Participant = {
         id: data.id,
         firstName: data.nombres,
@@ -443,6 +451,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
         created_at: data.created_at,
       };
       onAddParticipant(participantForState);
+      
+      // Reset form for next participant
+      setFormData(initialFormState);
+      signaturePadRef.current?.clear();
     }
 
     setIsSubmitting(false);
@@ -493,7 +505,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
                   ) : suggestions.length > 0 ? (
                     <ul>
                       {suggestions.map(p => (
-                        <li key={`${p.id}-${p.created_at}`} 
+                        <li key={p.id} 
                           className="p-3 text-sm text-gray-700 rounded-lg cursor-pointer hover:bg-slate-200/50"
                           onMouseDown={() => handleSelectParticipant(p)}
                         >

@@ -14,6 +14,7 @@ function App() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+  const [lastParticipantName, setLastParticipantName] = useState<string>('');
   
   const [reportVerificationId] = useState<string | null>(() => 
     new URLSearchParams(window.location.search).get('verificacion')
@@ -68,6 +69,7 @@ function App() {
 
   const handleAddParticipant = (participant: Participant) => {
     setParticipants(prev => [...prev, participant]);
+    setLastParticipantName(`${participant.firstName} ${participant.paternalLastName}`);
     setShowSuccessModal(true);
   };
 
@@ -99,12 +101,13 @@ function App() {
 
   const handleGoBack = () => {
     setCourseDetails(null);
+    setParticipants([]); // Clear participants when going back
   };
 
-  const handleSuccessAndExit = () => {
+  const handleRegisterNext = () => {
     setShowSuccessModal(false);
-    handleGoBack();
-  }
+    // The form now resets itself, so we just close the modal.
+  };
 
   if (reportVerificationId) {
     return <VerificationPage verificationId={reportVerificationId} />;
@@ -152,10 +155,12 @@ function App() {
         <div className="fixed inset-0 bg-slate-800 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
           <div onClick={(e) => e.stopPropagation()}>
             <NeumorphicCard className="w-full max-w-sm text-center">
-              <h2 className="text-xl font-bold text-green-600 mb-4">¡Éxito!</h2>
-              <p className="text-gray-700 mb-6">La asistencia se ha registrado con éxito.</p>
-              <NeumorphicButton onClick={handleSuccessAndExit}>
-                Salir
+              <h2 className="text-xl font-bold text-green-600 mb-4">¡Registro Exitoso!</h2>
+              <p className="text-gray-700 mb-6">
+                La asistencia de <strong className="font-semibold">{lastParticipantName}</strong> se ha guardado correctamente.
+              </p>
+              <NeumorphicButton onClick={handleRegisterNext}>
+                Registrar Siguiente
               </NeumorphicButton>
             </NeumorphicCard>
           </div>
