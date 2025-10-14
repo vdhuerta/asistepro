@@ -262,7 +262,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
       setShowSuggestions(true);
 
       const { data, error } = await supabase
-        .from('asistencias')
+        .from('participantes')
         .select('*')
         .ilike('rut', `${formData.rut}%`)
         .order('created_at', { ascending: false })
