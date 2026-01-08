@@ -89,12 +89,38 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, courseD
         nombre_curso: courseDetails.name,
       };
 
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabase!
         .from('constancia_verificaciones')
         .insert([verificationRecord]);
       
       if (insertError) {
-        throw new Error(`No se pudo crear el registro de verificación. Es posible que la tabla 'constancia_verificaciones' no exista o no tenga los permisos correctos. Detalles: ${insertError.message}`);
+        let userMessage = `No se pudo crear el registro de verificación. Detalles: ${insertError.message}`;
+        if (insertError.message.includes("relation \"public.constancia_verificaciones\" does not exist")) {
+            userMessage = "La tabla 'constancia_verificaciones' necesaria para generar constancias no existe en la base de datos. " +
+                        "Para solucionarlo, ejecute el siguiente script SQL en el editor de SQL de Supabase y vuelva a intentarlo.\n\n" +
+                        "--- COPIAR DESDE AQUÍ ---\n\n" +
+                        "-- 1. Crear la tabla para verificar constancias\n" +
+                        "CREATE TABLE public.constancia_verificaciones (\n" +
+                        "  id UUID NOT NULL PRIMARY KEY,\n" +
+                        "  curso_id UUID REFERENCES public.cursos(id) ON DELETE SET NULL,\n" +
+                        "  asistencia_id UUID REFERENCES public.asistencias(id) ON DELETE CASCADE,\n" +
+                        "  nombre_participante TEXT NOT NULL,\n" +
+                        "  rut_participante TEXT NOT NULL,\n" +
+                        "  nombre_curso TEXT NOT NULL,\n" +
+                        "  fecha_generacion TIMESTAMPTZ NOT NULL DEFAULT now()\n" +
+                        ");\n\n" +
+                        "-- 2. Habilitar Seguridad a Nivel de Fila (RLS)\n" +
+                        "ALTER TABLE public.constancia_verificaciones ENABLE ROW LEVEL SECURITY;\n\n" +
+                        "-- 3. Política para permitir LECTURA pública\n" +
+                        "CREATE POLICY \"Enable public read for constancia verification\" ON public.constancia_verificaciones FOR SELECT USING (true);\n\n" +
+                        "-- 4. Política para permitir INSERCIÓN al generar constancias\n" +
+                        "CREATE POLICY \"Enable insert for generating constancias\" ON public.constancia_verificaciones FOR INSERT WITH CHECK (true);\n\n" +
+                        "--- COPIAR HASTA AQUÍ ---";
+        } else if (insertError.message.includes("security policy") || insertError.message.includes("permission denied")) {
+            userMessage = `La creación del registro de verificación fue bloqueada por las políticas de seguridad de la base de datos (RLS).\n\n` +
+                          `Asegúrese de que existan las políticas correctas en la tabla "constancia_verificaciones". Puede usar el script de creación de tabla (que incluye las políticas) si la tabla es nueva.`;
+        }
+        throw new Error(userMessage);
       }
 
       // 2. Generate HTML from React component

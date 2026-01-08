@@ -25,7 +25,7 @@ const VerificationPage: React.FC<VerificationPageProps> = ({ verificationId }) =
       setLoading(true);
       setError(null);
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabase!
           .from('reporte_verificaciones')
           .select('*')
           .eq('id', verificationId)
@@ -36,7 +36,7 @@ const VerificationPage: React.FC<VerificationPageProps> = ({ verificationId }) =
                 throw new Error("La funcionalidad de verificación no está configurada correctamente. Por favor, contacte al administrador del sistema.");
             }
             if (error.code === 'PGRST116') {
-                throw new Error('El código de verificación no es válido o el reporte no fue encontrado.');
+                throw new Error('Reporte no encontrado. Es posible que el curso asociado se haya eliminado o que el enlace de verificación sea incorrecto.');
             }
             throw new Error('Error al contactar la base de datos.');
         }

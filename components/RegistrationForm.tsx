@@ -226,7 +226,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
       }
 
       const checkDuplicate = async () => {
-          const { data, error } = await supabase
+          const { data, error } = await supabase!
               .from('asistencias')
               .select('id')
               .eq('rut', formData.rut.trim().toUpperCase())
@@ -261,7 +261,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
       setIsSearching(true);
       setShowSuggestions(true);
 
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('participantes') // Search in the master table
         .select('*')
         .ilike('rut', `${formData.rut}%`)
@@ -388,7 +388,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
       firma: signature,
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('asistencias')
       .insert([newParticipantData])
       .select()
@@ -422,7 +422,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onAddParticipant, c
 
       // Use upsert: if RUT exists, update; otherwise, insert.
       // This requires 'rut' to be a PRIMARY KEY or have a UNIQUE constraint in the 'participantes' table.
-      const { error: upsertError } = await supabase
+      const { error: upsertError } = await supabase!
         .from('participantes')
         .upsert(participantMasterData, { onConflict: 'rut' });
 

@@ -1,4 +1,3 @@
-// Fix: Removed duplicated and malformed code block from the top of the file.
 import React, { useState, useEffect } from 'react';
 import { NeumorphicCard, NeumorphicInput, NeumorphicButton, SegmentedControl } from './UI';
 import { supabase } from '../lib/supabaseClient';
@@ -75,7 +74,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
   const fetchAdminCourses = async () => {
     setIsFetchingCourses(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('cursos')
         .select('*')
         .order('date', { ascending: false });
@@ -136,7 +135,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
         is_registration_open: true,
     };
 
-    const { error } = await supabase
+    const { error } = await supabase!
       .from('cursos')
       .insert([newCourse]);
       
@@ -173,7 +172,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
     setError('');
 
     const updatePromises = Object.entries(pendingChanges).map(([courseId, changes]) => 
-      supabase
+      supabase!
         .from('cursos')
         .update(changes)
         .eq('id', courseId)
@@ -207,7 +206,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
   const handleDownloadCsv = async (courseId: string, courseName: string, courseDate: string) => {
     setDownloading({ id: courseId, type: 'csv' });
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('asistencias')
         .select('*')
         .eq('curso_id', courseId)
@@ -374,7 +373,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
   const handleDownloadHtml = async (course: CourseDetails) => {
     setDownloading({ id: course.id, type: 'html' });
     try {
-      const { data: participants, error: participantsError } = await supabase
+      const { data: participants, error: participantsError } = await supabase!
         .from('asistencias')
         .select('*')
         .eq('curso_id', course.id)
@@ -398,7 +397,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
         fecha_generacion_reporte: new Date().toISOString(),
       };
       
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabase!
         .from('reporte_verificaciones')
         .insert([verificationRecord]);
         
@@ -473,7 +472,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
 
     setDeletingCourseId(courseId);
     try {
-      const { error } = await supabase
+      const { error } = await supabase!
         .from('cursos')
         .delete()
         .eq('id', courseId);
@@ -487,7 +486,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
     } catch (err: any) {
       console.error('Error deleting course:', err);
       let userMessage = getErrorMessage(err);
-      if (err.message && (err.message.includes('security policy') || err.message.includes('permission denied'))) {
+      if (err.message && (err.message.includes('security policy') || error.message.includes('permission denied'))) {
         userMessage = 'La eliminación fue bloqueada por las políticas de seguridad de la base de datos (RLS). ' +
                       'Asegúrese de que exista una política que permita la eliminación (DELETE) en la tabla "cursos" para el rol "anon".';
       }
@@ -560,17 +559,28 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                     <p className="text-center text-gray-600">Cargando cursos...</p>
                 ) : (
                   <>
-                    <div className="space-y-3 max-h-60 overflow-y-auto p-1 pr-3">
+                    <div className="space-y-4 max-h-96 overflow-y-auto p-1 pr-3">
                         {adminCourses.map(course => (
-                            <div key={course.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-slate-50/80 p-3 rounded-lg shadow-[inset_3px_3px_6px_#c7ced4,inset_-3px_-3px_6px_#ffffff]">
-                                <div className="flex-grow pr-4">
-                                    <p className="font-semibold text-gray-800 text-sm truncate" title={course.name}>{course.name}</p>
-                                    <p className="text-xs text-gray-500">{formatDate(course.date)}</p>
+                            <div key={course.id} className="bg-slate-50/80 p-4 rounded-lg shadow-[inset_3px_3px_6px_#c7ced4,inset_-3px_-3px_6px_#ffffff] flex flex-col gap-3">
+                                {/* L1: Nombre de la actividad */}
+                                <div className="w-full">
+                                    <p className="font-bold text-gray-800 text-sm leading-tight" title={course.name}>
+                                        {course.name}
+                                    </p>
                                 </div>
-                                <div className="flex items-center justify-end gap-2 flex-wrap">
+                                
+                                {/* L2: Fecha de la actividad */}
+                                <div className="w-full">
+                                    <p className="text-xs text-gray-500 font-medium">
+                                        📅 {formatDate(course.date)}
+                                    </p>
+                                </div>
+
+                                {/* L3: Cajas de comandos [Habilitado/Cerrado] y [Visible/Oculto] */}
+                                <div className="flex flex-wrap gap-2 items-center">
                                   <SegmentedControl
                                     className="border border-slate-300"
-                                    buttonClassName="text-[11px]"
+                                    buttonClassName="text-[10px] sm:text-[11px] py-1 px-2"
                                     options={[
                                       { label: 'Habilitado', value: true, activeClassName: 'bg-sky-200 text-sky-800' },
                                       { label: 'Cerrado', value: false, activeClassName: 'bg-amber-200 text-amber-800' },
@@ -581,7 +591,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                                   />
                                   <SegmentedControl
                                     className="border border-slate-300"
-                                    buttonClassName="text-[11px]"
+                                    buttonClassName="text-[10px] sm:text-[11px] py-1 px-2"
                                     options={[
                                       { label: 'Visible', value: true, activeClassName: 'bg-green-200 text-green-800' },
                                       { label: 'Oculto', value: false, activeClassName: 'bg-red-200 text-red-800' },
@@ -590,21 +600,28 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
                                     onChange={(newValue) => handleCourseDataChange(course.id, 'is_visible', newValue)}
                                     disabled={isSaving || downloading.id !== null || deletingCourseId !== null}
                                   />
+                                </div>
+
+                                {/* L4: Informes CSV y HTML + icono de ELIMINAR curso */}
+                                <div className="flex items-center justify-between gap-2 border-t border-slate-200/50 pt-2">
+                                  <div className="flex gap-2">
+                                    <NeumorphicButton
+                                      onClick={() => handleDownloadCsv(course.id, course.name, course.date)}
+                                      disabled={downloading.id !== null || deletingCourseId !== null}
+                                      className="!py-1 !px-2.5 text-[10px] sm:text-[11px] whitespace-nowrap flex items-center gap-1 border border-slate-300"
+                                    >
+                                      {downloading.id === course.id && downloading.type === 'csv' ? '...' : <><DownloadIcon /> CSV</>}
+                                    </NeumorphicButton>
+                                    <NeumorphicButton
+                                      onClick={() => handleDownloadHtml(course)}
+                                      disabled={downloading.id !== null || deletingCourseId !== null}
+                                      className="!py-1 !px-2.5 text-[10px] sm:text-[11px] whitespace-nowrap flex items-center gap-1 border border-slate-300"
+                                    >
+                                      {downloading.id === course.id && downloading.type === 'html' ? '...' : <><DownloadIcon /> HTML</>}
+                                    </NeumorphicButton>
+                                  </div>
+                                  
                                   <NeumorphicButton
-                                    onClick={() => handleDownloadCsv(course.id, course.name, course.date)}
-                                    disabled={downloading.id !== null || deletingCourseId !== null}
-                                    className="!py-1 !px-3 text-[11px] whitespace-nowrap flex items-center gap-1.5 border border-slate-300"
-                                  >
-                                    {downloading.id === course.id && downloading.type === 'csv' ? '...' : <><DownloadIcon /> CSV</>}
-                                  </NeumorphicButton>
-                                  <NeumorphicButton
-                                    onClick={() => handleDownloadHtml(course)}
-                                    disabled={downloading.id !== null || deletingCourseId !== null}
-                                    className="!py-1 !px-3 text-[11px] whitespace-nowrap flex items-center gap-1.5 border border-slate-300"
-                                  >
-                                    {downloading.id === course.id && downloading.type === 'html' ? '...' : <><DownloadIcon /> HTML</>}
-                                  </NeumorphicButton>
-                                   <NeumorphicButton
                                     onClick={() => handleDeleteCourse(course.id, course.name)}
                                     disabled={isSaving || downloading.id !== null || deletingCourseId !== null}
                                     className="!py-1 !px-3 text-[11px] !bg-red-100 !text-red-700 hover:!text-red-900 active:!shadow-[inset_1px_1px_2px_#d9b8b8,inset_-1px_-1px_2px_#ffffff] border border-red-300"

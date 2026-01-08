@@ -1,17 +1,21 @@
-import { createClient } from '@supabase/supabase-js';
 
-// -----------------------------------------------------------------------------
-// IMPORTANTE: Reemplaza estos valores con la URL y la clave anónima de tu proyecto de Supabase.
-// Puedes encontrarlos en la sección "API" de la configuración de tu proyecto en supabase.com.
-// -----------------------------------------------------------------------------
-const supabaseUrl = 'https://aqxemlmtzobiuesqokmy.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxeGVtbG10em9iaXVlc3Fva215Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0Mjk4MjQsImV4cCI6MjA3NjAwNTgyNH0.qONWXtkGGxZPSeGUIC1u3On_YY0kjRUZH12aZVnYkxA';
-// -----------------------------------------------------------------------------
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { supabaseUrl, supabaseAnonKey } from '../config';
 
-if (supabaseUrl === 'https://aqxemlmtzobiuesqokmy.supabase.co' || supabaseAnonKey === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxeGVtbG10em9iaXVlc3Fva215Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0Mjk4MjQsImV4cCI6MjA3NjAwNTgyNH0.qONWXtkGGxZPSeGUIC1u3On_YY0kjRUZH12aZVnYkxA') {
-    const warningStyle = 'color: red; font-size: 16px; font-weight: bold;';
-    console.warn('%c¡ATENCIÓN! Las credenciales de Supabase no están configuradas.', warningStyle);
-    console.warn('Por favor, edita el archivo `lib/supabaseClient.ts` y añade la URL y la clave anónima de tu proyecto.');
+// Fix: Cast supabaseUrl and supabaseAnonKey to string to allow comparison with placeholder strings and avoid literal type overlap errors.
+const isConfigured = (supabaseUrl as string) !== 'YOUR_SUPABASE_URL' && (supabaseAnonKey as string) !== 'YOUR_SUPABASE_ANON_KEY';
+
+let supabase: SupabaseClient | null = null;
+
+if (isConfigured) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+  } catch (error) {
+    console.error("Error al inicializar el cliente de Supabase. Por favor, verifique sus credenciales en config.ts.", error);
+  }
+} else {
+    // Este mensaje solo aparecerá en la consola del desarrollador si la app no está configurada.
+    console.warn("Supabase no está configurado. Por favor, agregue sus credenciales al archivo config.ts.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export { supabase, isConfigured };

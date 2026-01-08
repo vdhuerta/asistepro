@@ -29,7 +29,7 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
     setFetchError(null);
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('cursos')
         .select('*')
         .eq('is_visible', true)
@@ -50,8 +50,33 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
       }
     } catch (err: any) {
       console.error('Error fetching courses:', err);
-      const errorMessage = `No se pudieron cargar los cursos. Causa: ${err.message || 'Error desconocido.'}. Verifique la conexión y la configuración de la base de datos.`;
-      setFetchError(errorMessage);
+      let userMessage: string;
+
+      if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+        userMessage = "Error de Conexión: No se pudo conectar con la base de datos.\n\n" +
+                      "Sugerencias:\n" +
+                      "1. Verifique su conexión a internet.\n" +
+                      "2. Asegúrese de que la 'supabaseUrl' en 'lib/supabaseClient.ts' sea correcta y no tenga errores de tipeo.";
+      } else if (err.message && (err.message.includes('Invalid API key') || err.message.includes('Unauthorized'))) {
+        userMessage = "Error de Autenticación: La clave de API (anon key) parece ser incorrecta.\n\n" +
+                      "Sugerencias:\n" +
+                      "1. Verifique que la 'supabaseAnonKey' en 'lib/supabaseClient.ts' sea la correcta.\n" +
+                      "2. Asegúrese de que la clave corresponde a la URL del proyecto que está utilizando.";
+      } else {
+        // This is a generic catch-all, often triggered by RLS policies blocking the query.
+        userMessage = "Error al Cargar Cursos: La base de datos no devolvió la lista de cursos. Esto usualmente ocurre por una de dos razones:\n\n" +
+                      "1. Las credenciales en 'lib/supabaseClient.ts' son incorrectas.\n" +
+                      "2. Las políticas de seguridad (RLS) no permiten el acceso público a la tabla de cursos.\n\n" +
+                      "**SOLUCIÓN PARA PERMISOS (RLS):**\n" +
+                      "Si está seguro de que sus credenciales son correctas, copie y ejecute el siguiente código en el 'SQL Editor' de su proyecto en Supabase. Esto permitirá que la aplicación lea la lista de cursos de forma segura:\n\n" +
+                      "----------------------------------------------------\n" +
+                      "-- Habilitar Seguridad a Nivel de Fila (RLS)\n" +
+                      "alter table public.cursos enable row level security;\n\n" +
+                      "-- Crear una política para permitir LECTURA pública\n" +
+                      "create policy \"Enable public read access for courses\" on public.cursos for select using (true);\n" +
+                      "----------------------------------------------------";
+      }
+      setFetchError(userMessage);
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +87,7 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
     fetchCourses();
 
     // Set up real-time subscription
-    const channel = supabase
+    const channel = supabase!
       .channel('cursos-realtime-channel')
       .on(
         'postgres_changes',
@@ -77,7 +102,7 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
 
     // Cleanup subscription on component unmount
     return () => {
-      supabase.removeChannel(channel);
+      supabase!.removeChannel(channel);
     };
      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -136,7 +161,7 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
               aria-label="Panel de Administrador"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.995s.145.755.438.995l1.003.827c.424.35.534.954.26 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.332.183-.582.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.003-.827c.293-.24.438.613-.438-.995s-.145-.755-.438-.995l-1.003-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582.495.645-.87l.213-1.281Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.995s.145.755.438.995l1.003.827c.424.35.534.954.26 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.332.183-.582.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.003-.827c.293-.24.438.613-.438-.995s-.145-.755-.438-.995l-1.003-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.075.124.073-.044.146-.087.22-.127.332-.183.582.495.645-.87l.213-1.281Z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0Z" />
               </svg>
             </button>
@@ -148,7 +173,9 @@ const CourseSetup: React.FC<CourseSetupProps> = ({ onSetupComplete }) => {
             <p className="text-center text-gray-600">Cargando cursos...</p>
           ) : fetchError ? (
             <div className="text-center space-y-4">
-              <p className="text-red-600 bg-red-100 p-3 rounded-lg">{fetchError}</p>
+               <div className="text-left text-sm text-red-700 bg-red-100 p-4 rounded-lg overflow-x-auto ring-1 ring-red-200">
+                <pre className="whitespace-pre-wrap font-sans leading-relaxed">{fetchError}</pre>
+              </div>
               <NeumorphicButton onClick={fetchCourses}>
                   Reintentar
               </NeumorphicButton>

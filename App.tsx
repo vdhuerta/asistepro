@@ -6,7 +6,8 @@ import RegistrationForm from './components/RegistrationForm';
 import ParticipantList from './components/ParticipantList';
 import VerificationPage from './components/VerificationPage';
 import ConstanciaVerificationPage from './components/ConstanciaVerificationPage';
-import { supabase } from './lib/supabaseClient';
+import { supabase, isConfigured } from './lib/supabaseClient';
+import ConfigurationError from './components/ConfigurationError';
 import { NeumorphicButton, NeumorphicCard } from './components/UI';
 
 function App() {
@@ -23,11 +24,17 @@ function App() {
     new URLSearchParams(window.location.search).get('constancia')
   );
 
+  // Si la configuración no está presente en config.ts, muestra una pantalla de error.
+  // Esto previene que la aplicación intente ejecutarse sin conexión a la base de datos.
+  if (!isConfigured) {
+    return <ConfigurationError />;
+  }
+  
   useEffect(() => {
     if (courseDetails) {
       const fetchParticipants = async () => {
         setIsLoading(true);
-        const { data, error } = await supabase
+        const { data, error } = await supabase!
           .from('asistencias')
           .select('*')
           .eq('curso_id', courseDetails.id)
@@ -74,7 +81,7 @@ function App() {
   };
 
   const handleDeleteParticipant = async (participantId: string) => {
-    const { error } = await supabase
+    const { error } = await supabase!
       .from('asistencias')
       .delete()
       .eq('id', participantId);

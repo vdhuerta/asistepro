@@ -17,7 +17,7 @@ const ConstanciaVerificationPage: React.FC<ConstanciaVerificationPageProps> = ({
       setLoading(true);
       setError(null);
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabase!
           .from('constancia_verificaciones')
           .select('*')
           .eq('id', verificationId)
@@ -25,7 +25,7 @@ const ConstanciaVerificationPage: React.FC<ConstanciaVerificationPageProps> = ({
 
         if (error) {
           if (error.code === 'PGRST116') {
-            throw new Error('El código de verificación no es válido o la constancia no fue encontrada.');
+            throw new Error('Constancia no encontrada. Es posible que el registro de asistencia original se haya eliminado o que el enlace de verificación sea incorrecto.');
           }
            throw new Error(`Error al contactar la base de datos: ${error.message}`);
         }
