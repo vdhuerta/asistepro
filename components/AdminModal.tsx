@@ -218,14 +218,27 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, onCourseCreated }) => 
         return;
       }
 
+      // Updated headers order and labels
       const headers = [
-        "Nombres", "Apellido Paterno", "Apellido Materno", "RUT", "Email", "Teléfono",
-        "Rol", "Facultad", "Departamento", "Carrera", "Tipo Contrato", "Semestre Docencia", "Sede", "Fecha de Registro"
+        "RUT", "Nombres", "Apellido Paterno", "Apellido Materno", "Correo", "Teléfono",
+        "Rol", "Facultad", "Departamento", "Carrera", "Contrato", "Semestre Docencia", "Sede"
       ];
       
+      // Updated data mapping to match headers
       const rows = data.map(p => [
-        p.nombres, p.apellido_paterno, p.apellido_materno, p.rut, p.email, p.telefono,
-        p.rol, p.facultad, p.departamento, p.carrera, p.tipo_contrato, p.semestre_docencia, p.sede, p.created_at
+        p.rut,
+        p.nombres,
+        p.apellido_paterno,
+        p.apellido_materno,
+        p.email, // Correo
+        p.telefono,
+        p.rol,
+        p.facultad,
+        p.departamento,
+        p.carrera,
+        p.tipo_contrato, // Contrato
+        p.semestre_docencia,
+        p.sede
       ]);
       
       const escapeCsvValue = (value: any): string => {
